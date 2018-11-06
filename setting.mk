@@ -17,6 +17,9 @@ OUTPUTBINSDIR=$(ROOTDIR)/output/bin
 #添加系统配置的头文件目录
 CFLAGS+=-I$(ROOTDIR)
 CFLAGS+=-I$(ROOTDIR)/src
+CFLAGS+=-I$(ROOTDIR)/src/dataplane
+CFLAGS+=-I$(ROOTDIR)/src/shareplane
+CFLAGS+=-I$(ROOTDIR)/src/mgmtplane
 CFLAGS+=-I$(ROOTDIR)/libs/include
 CFLAGS+=-I$(ROOTDIR)/libs/include/vos
 CFLAGS+=-I$(ROOTDIR)/libs/include/rct

@@ -22,13 +22,34 @@
 
 int main()
 {
-    /*1. 服务端的环境初始化*/
-    if( VOS_ERR == SEV_EnvInit())
+    VOS_SM_T stVsmStop={0};
+    
+    /*停止信号*/
+    if( VOS_ERR == VOS_SM_Init(&stVsmStop) )
     {
-        VOS_Printf("Server enviroment initialize error!\n");
+        VOS_PrintDebug("VOS Semaphore stop error");
+        return -1;
+    }
+    
+    /*1. 服务端的环境初始化*/
+    if( VOS_ERR == Main_EnvInit())
+    {
+        VOS_Printf("Main enviroment initialize error!\n");
         return VOS_ERR;
     }
-        
 
+    /*2. 启动运行*/
+    if( VOS_ERR == RCT_API_EnvRun())
+    {
+        VOS_Printf("Reactor enviroment running error!\n");
+        return VOS_ERR;
+    }
+    
+    /*顺便测试使用VOS信号量*/
+    VOS_SM_P(&stVsmStop,0);
+    Main_EnvUnInit();
+    VOS_SM_Destroy(&stVsmStop);
+    VOS_Printf("Main pthread End!\n");
+    
     return VOS_OK;
 }

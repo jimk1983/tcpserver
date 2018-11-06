@@ -1,6 +1,6 @@
 /******************************************************************************
 
-                  版权所有 (C), 2018-2028, 杭州友机技术有限公司
+                  版权所有 (C), 2018-2028, 技术有限公司
 
  ******************************************************************************
   文 件 名   : init.c
@@ -21,9 +21,14 @@
 
 #include "common.h"
 #include "init.h"
+#include "swm/swm_ctx.h"
+#include "upfile/upf_ctx.h"
+#include "vgm/vgm_ctx.h"
+
+
 
 /*****************************************************************************
- 函 数 名  : SEV_EnvInit
+ 函 数 名  : Main_EnvInit
  功能描述  : 服务环境初始化
  输入参数  : 无
  输出参数  : 无
@@ -37,15 +42,34 @@
     修改内容   : 新生成函数
 
 *****************************************************************************/
-INT32 SEV_EnvInit()
+INT32 Main_EnvInit()
 {
     /*框架初始化*/
     if( VOS_ERR == RCT_API_EnvInit() )
     {
         return VOS_ERR;
-
     }
 
+    /********管理面**********/
+    if ( VOS_ERR == VGM_CtxInit() )
+    {
+        Main_EnvUnInit();
+        return VOS_ERR;
+    }
+    
+    /********业务面**********/
+    /*1. SWM业务初始化*/
+    if ( VOS_ERR == SWM_CtxInit() )
+    {
+        Main_EnvUnInit();
+        return VOS_ERR;
+    }
+    /*2. UPF业务初始化*/
+    if ( VOS_ERR == UPF_CtxInit() )
+    {
+        Main_EnvUnInit();
+        return VOS_ERR;
+    }
 
     return VOS_OK;
 }
@@ -67,11 +91,12 @@ INT32 SEV_EnvInit()
     修改内容   : 新生成函数
 
 *****************************************************************************/
-VOID SEV_EnvUnInit()
+VOID Main_EnvUnInit()
 {
-
+    VGM_CtxUnInit();
+    SWM_CtxUnInit();
+    UPF_CtxUnInit();
     RCT_API_EnvUnInit();
-    
 }
 
 
