@@ -157,7 +157,7 @@ VOID SWM_TLS_ConnRecvCb(VOID *pvTlsConn)
         VOS_Printf("tls-con is NULL!");
         return;
     }
-    
+
     pstTlsConn = (SWM_TLS_CONN_S *)pvTlsConn;
 
     pstBizChannel = pstTlsConn->pstBizChannel;
@@ -166,129 +166,129 @@ VOID SWM_TLS_ConnRecvCb(VOID *pvTlsConn)
         VOS_Printf("system error!");
         return;
     }
+
+    VOS_Printf("SWM_TLS_ConnRecvCb recvfd=%d", pstTlsConn->lConnfd);
     
-    /*接收完成进行数据处理*/
-    if ( SWM_TLS_SSL_STATUS_ACCEPTED == pstTlsConn->lHandShakeStatus )
-    {
-        /*这里会重新创建一个iobuf,
-           iobuf就随着管道一级一级的往后推送处理, 最后一个需要释放*/
+    /*这里会重新创建一个iobuf,
+       iobuf就随着管道一级一级的往后推送处理, 最后一个需要释放*/
+    if ( NULL == pstTlsConn->pstRecvIobuf )
+    {    
+        /*申请TCP类型的IOBUF内存*/
+        pstTlsConn->pstRecvIobuf = COM_Iobuf_Malloc(SWM_MID_SID_TLS);
         if ( NULL == pstTlsConn->pstRecvIobuf )
-        {    
-            /*申请TCP类型的IOBUF内存*/
-            pstTlsConn->pstRecvIobuf = COM_Iobuf_Malloc(SWM_MID_SID_TLS);
-            if ( NULL == pstTlsConn->pstRecvIobuf )
-            {
-                VOS_Printf("iobuf create error!");
-                SWM_TLS_ConnDelNotify(pstTlsConn);
-                return;
-            }
-        }
-        
-        /*这里也可能是上一次只是收了一个字节，或者需要继续收的
-        接收完成的话，会将这个iobuf推送到下一个节点*/
-        lRecvLen = COM_IOBUF_GETSPACE_LEN(pstTlsConn->pstRecvIobuf);
-        if ( 0 >= lRecvLen )
         {
-            VOS_Printf("iobuf get free len error,  lRecvLen=%d!", lRecvLen);
+            VOS_Printf("iobuf create error!");
             SWM_TLS_ConnDelNotify(pstTlsConn);
             return;
         }
-        /*获取空闲的数据空间*/
-        pcData = COM_IOBUF_GETSAPCE_DATA(pstTlsConn->pstRecvIobuf);
-        
-        /*读取数据*/
-        //lError = UTL_SSL_Read(pstTlsConn->pstSsl, pcData, lRecvLen, &lErrorStatus);
-        lError = VOS_SOCK_Recv(pstTlsConn->lConnfd, pcData, lRecvLen, &lErrorStatus);
-        if ( VOS_ERR == lError )
-        {
-            if ( VOS_SOCK_EWOULDBLOCK == lErrorStatus )
-            {
-                VOS_Printf("UTL_SSL_Read ewouldblock!");
-                return;
-            }
-            else 
-            {
-                VOS_Printf("UTL_SSL_Read error!");
-                SWM_TLS_ConnDelNotify(pstTlsConn);
-                return;
-            }
-        }
-        else if ( 0 == lError )
-        {
-            VOS_Printf("UTL_SSL_Read ret = 0!");
+    }
+    
+    /*这里也可能是上一次只是收了一个字节，或者需要继续收的
+    接收完成的话，会将这个iobuf推送到下一个节点*/
+    lRecvLen = COM_IOBUF_GETSPACE_LEN(pstTlsConn->pstRecvIobuf);
+    if ( 0 >= lRecvLen )
+    {
+        VOS_Printf("iobuf get free len error,  lRecvLen=%d!", lRecvLen);
+        SWM_TLS_ConnDelNotify(pstTlsConn);
+        return;
+    }
+    /*获取空闲的数据空间*/
+    pcData = COM_IOBUF_GETSAPCE_DATA(pstTlsConn->pstRecvIobuf);
 
-            /*可能已经产生了下一个节点，需要通知方式删除*/
-            SWM_TLS_ConnDelNotify(pstTlsConn);
-            
+    VOS_Printf("swm tls conn recv cb entry, connfd=%d!", pstTlsConn->lConnfd);
+    
+    /*读取数据*/
+    //lError = UTL_SSL_Read(pstTlsConn->pstSsl, pcData, lRecvLen, &lErrorStatus);
+    lError = VOS_SOCK_Recv(pstTlsConn->lConnfd, pcData, lRecvLen, &lErrorStatus);
+    if ( VOS_ERR == lError )
+    {
+        if ( VOS_SOCK_EWOULDBLOCK == lErrorStatus )
+        {
+            VOS_Printf("UTL_SSL_Read ewouldblock!");
             return;
         }
-        else        
+        else 
         {
-             if ( 1 == lError )
-             {
-                 /*接收到1个字节,还继续接收 */
-                 VOS_Printf("UTL_SSL_Read must be continue!");
-                 /*设置接收到更新的长度*/
-                 COM_IOBUF_SETINPUTED_LEN(pstTlsConn->pstRecvIobuf, lError);
-                 return;
-             }
-             
-             /*继续更新*/
+            VOS_Printf("UTL_SSL_Read error!");
+            SWM_TLS_ConnDelNotify(pstTlsConn);
+            return;
+        }
+    }
+    else if ( 0 == lError )
+    {
+        VOS_Printf("UTL_SSL_Read ret = 0!");
+
+        /*可能已经产生了下一个节点，需要通知方式删除*/
+        SWM_TLS_ConnDelNotify(pstTlsConn);
+        
+        return;
+    }
+    else        
+    {
+         if ( 1 == lError )
+         {
+             /*接收到1个字节,还继续接收 */
+             VOS_Printf("UTL_SSL_Read must be continue!");
+             /*设置接收到更新的长度*/
              COM_IOBUF_SETINPUTED_LEN(pstTlsConn->pstRecvIobuf, lError);
-        }
-        
-        /*开始进入业务识别处理*/
-        if ( EMPTO_BIZTYPEID_UNKNOW == pstBizChannel->ulBizType  )
+             return;
+         }
+         
+         /*继续更新*/
+         COM_IOBUF_SETINPUTED_LEN(pstTlsConn->pstRecvIobuf, lError);
+    }
+    
+    /*开始进入业务识别处理*/
+    if ( EMPTO_BIZTYPEID_UNKNOW == pstBizChannel->ulBizType  )
+    {
+        if(EMPTO_BIZTYPEID_UNKNOW == SWM_Biz_ChannelMatch(pstBizChannel, pcData, lError) )
         {
-            if(EMPTO_BIZTYPEID_UNKNOW == SWM_Biz_ChannelMatch(pstBizChannel, pcData, lError) )
-            {
-                SWM_TLS_ConnDelNotify(pstTlsConn);
-                VOS_Printf("swm biz type is unknow!");
-                return;
-            }
-            VOS_Printf("swm biz type is[%d], start match the bizchannel", pstBizChannel->ulBizType);
+            SWM_TLS_ConnDelNotify(pstTlsConn);
+            VOS_Printf("swm biz type is unknow!");
+            return;
         }
-        else
+        VOS_Printf("swm biz type is[%d], start match the bizchannel", pstBizChannel->ulBizType);
+    }
+    else
+    {
+        /*先检查下长度，是否需要继续接收*/
+        if ( VOS_ERR == SWM_Biz_ChannelCheckLen(pcData, lError))
         {
-            /*先检查下长度，是否需要继续接收*/
-            if ( VOS_ERR == SWM_Biz_ChannelCheckLen(pcData, lError))
-            {
-                 VOS_Printf("check the length UTL_SSL_Read must be continue!");
-                 COM_IOBUF_SETINPUTED_LEN(pstTlsConn->pstRecvIobuf, lError);
-                 return;
-            }
-        }
-
-        /*将接收到的Iobuf 推送给下一个节点 */
-        lRet = SWM_TLS_PipeTransBufToNextPipeNode(&pstTlsConn->stTlsPipe, pstTlsConn->pstRecvIobuf);
-        switch(lRet)
-        {
-            case SWM_PIPE_IOBUF_OK:
-                /*这种都表示推送成功*/
-                /*TODO: 统计流量*/
-                VOS_Printf("Tls connect node pipe to next node ok!!");
-                /*本接收指针需要重新赋值为空*/
-                pstTlsConn->pstRecvIobuf = NULL;
-                break;
-            case SWM_PIPE_IOBUF_EWOULDBLOCK:
-                /*这种要关闭外网的接收*/
-                VOS_Printf("Tls connect node pipe to next node ewouldblock!");
-                (VOID)RCT_API_NetOpsEventCtrl(&pstTlsConn->stNetEvtOps, VOS_EPOLL_CTRL_INCLOSE);            
-                return;
-            case SWM_PIPE_IOBUF_AGAIN:
-                /*继续接收的话，什么都不做*/
-                break;
-            case SWM_PIPE_IOBUF_PARAM_ERR:
-            case SWM_PIPE_IOBUF_PIPENODE_ERR:
-            case SWM_PIPE_IOBUF_UNKNOW_ERR:
-                VOS_Printf("Tls connect node pipe to next node error, notify all pipe goto expire!");
-                SWM_TLS_ConnDelNotify(pstTlsConn);
-                break;
-            default:
-                break;
+             VOS_Printf("check the length UTL_SSL_Read must be continue!");
+             COM_IOBUF_SETINPUTED_LEN(pstTlsConn->pstRecvIobuf, lError);
+             return;
         }
     }
 
+    /*将接收到的Iobuf 推送给下一个节点 */
+    lRet = SWM_TLS_PipeTransBufToNextPipeNode(&pstTlsConn->stTlsPipe, pstTlsConn->pstRecvIobuf);
+    switch(lRet)
+    {
+        case SWM_PIPE_IOBUF_OK:
+            /*这种都表示推送成功*/
+            /*TODO: 统计流量*/
+            VOS_Printf("Tls connect node pipe to next node ok!!");
+            /*本接收指针需要重新赋值为空*/
+            pstTlsConn->pstRecvIobuf = NULL;
+            break;
+        case SWM_PIPE_IOBUF_EWOULDBLOCK:
+            /*这种要关闭外网的接收*/
+            VOS_Printf("Tls connect node pipe to next node ewouldblock!");
+            (VOID)RCT_API_NetOpsEventCtrl(&pstTlsConn->stNetEvtOps, VOS_EPOLL_CTRL_INCLOSE);            
+            return;
+        case SWM_PIPE_IOBUF_AGAIN:
+            /*继续接收的话，什么都不做*/
+            break;
+        case SWM_PIPE_IOBUF_PARAM_ERR:
+        case SWM_PIPE_IOBUF_PIPENODE_ERR:
+        case SWM_PIPE_IOBUF_UNKNOW_ERR:
+            VOS_Printf("Tls connect node pipe to next node error, notify all pipe goto expire!");
+            SWM_TLS_ConnDelNotify(pstTlsConn);
+            break;
+        default:
+            break;
+    }
+    
     return;
 }
 
@@ -326,83 +326,79 @@ VOID SWM_TLS_ConnSendCb(VOID *pvTlsConn)
     
     pstTlsConn = (SWM_TLS_CONN_S *)pvTlsConn;
     
-    /*已经完成握手*/
-    if ( SWM_TLS_SSL_STATUS_ACCEPTED == pstTlsConn->lHandShakeStatus )
+    /*先看看队列是不是空的,如果是空的，则关闭发送*/
+    if ( VOS_TRUE == COM_Iobuf_QueIsEmpty(pstTlsConn->pstBizChannel->pstSwmSendQueue))
     {
-        /*先看看队列是不是空的,如果是空的，则关闭发送*/
-        if ( VOS_TRUE == COM_Iobuf_QueIsEmpty(pstTlsConn->pstBizChannel->pstSwmSendQueue))
+        /*关闭发送*/
+        (VOID)RCT_API_NetOpsEventCtrl(&pstTlsConn->stNetEvtOps, VOS_EPOLL_CTRL_OUTCLOSE);
+        return;
+    }
+
+    /*上一次还没有发完，需要继续发送*/
+    if ( NULL != pstTlsConn->pstSendIobuf )
+    {
+        VOS_Printf("Tls send iobuf is not empty , must be send again!");
+        goto SendAgain;
+    }
+
+    /*发送队列的数目，不为空肯定是>0*/
+    ulNums = COM_Iobuf_QueGetNums(pstTlsConn->pstBizChannel->pstSwmSendQueue);
+            
+    for(ulIndex = 0; ulIndex < ulNums; ulIndex++)
+    {
+        /*先入先出，队列尾插入，队列头取出*/
+        pstIobufTmp = COM_Iobuf_QuePop(pstTlsConn->pstBizChannel->pstSwmSendQueue);
+        if ( NULL == pstIobufTmp )
         {
-            /*关闭发送*/
-            (VOID)RCT_API_NetOpsEventCtrl(&pstTlsConn->stNetEvtOps, VOS_EPOLL_CTRL_OUTCLOSE);
+            /*不应该发生,系统错误*/
+            VOS_Printf("tls pop the iobuf nums error!");
+            SWM_TLS_ConnDelNotify(pstTlsConn);
             return;
         }
-
-        /*上一次还没有发完，需要继续发送*/
-        if ( NULL != pstTlsConn->pstSendIobuf )
+        
+        /*进入到发送流程*/
+        pstTlsConn->pstSendIobuf = pstIobufTmp;
+        
+SendAgain:
+        pcData   = COM_IOBUF_GETSAVED_DATA(pstTlsConn->pstSendIobuf);
+        lLeftLen = COM_IOBUF_GETSAVED_LEN(pstTlsConn->pstSendIobuf);
+        //lRet = UTL_SSL_Write(pstTlsConn->pstSsl, pcData, lLeftLen, &lErrorStatus);
+        lRet = VOS_SOCK_Send(pstTlsConn->lConnfd, pcData, lLeftLen, &lErrorStatus);
+        if ( 0 < lRet )
         {
-            VOS_Printf("Tls send iobuf is not empty , must be send again!");
-            goto SendAgain;
-        }
+            COM_IOBUF_SETOUTPUTED_LEN(pstTlsConn->pstSendIobuf, lRet);
+            lLeftLen = COM_IOBUF_GETSAVED_LEN(pstTlsConn->pstSendIobuf);
 
-        /*发送队列的数目，不为空肯定是>0*/
-        ulNums = COM_Iobuf_QueGetNums(pstTlsConn->pstBizChannel->pstSwmSendQueue);
-                
-        for(ulIndex = 0; ulIndex < ulNums; ulIndex++)
-        {
-            /*先入先出，队列尾插入，队列头取出*/
-            pstIobufTmp = COM_Iobuf_QuePop(pstTlsConn->pstBizChannel->pstSwmSendQueue);
-            if ( NULL == pstIobufTmp )
+            /*表明所有数据已经发送完成,继续链表中的buf进行发送*/
+            if ( lLeftLen == 0 )
             {
-                /*不应该发生,系统错误*/
-                VOS_Printf("tls pop the iobuf nums error!");
+                COM_Iobuf_Free(pstTlsConn->pstSendIobuf);
+                pstTlsConn->pstSendIobuf = NULL;
+                continue;
+            }
+            else if ( 0 < lLeftLen )
+            {
+                /*还有继续剩余*/
+                goto SendAgain;
+            }
+        }
+        else 
+        {
+            /*TODO:出现这个，表示阻塞了，可能需要起个一次性的定时器来不停的尝试*/
+            if ( VOS_SOCK_SSL_EWOULDBLOCK == lErrorStatus )
+            {
+                VOS_Printf("UTL_SSL_Write EWOULDBLOCK!");
+                return;
+            }
+            else
+            {
+                VOS_Printf("UTL_SSL_Write error!");
                 SWM_TLS_ConnDelNotify(pstTlsConn);
                 return;
             }
-            
-            /*进入到发送流程*/
-            pstTlsConn->pstSendIobuf = pstIobufTmp;
-            
-SendAgain:
-            pcData   = COM_IOBUF_GETSAVED_DATA(pstTlsConn->pstSendIobuf);
-            lLeftLen = COM_IOBUF_GETSAVED_LEN(pstTlsConn->pstSendIobuf);
-            //lRet = UTL_SSL_Write(pstTlsConn->pstSsl, pcData, lLeftLen, &lErrorStatus);
-            lRet = VOS_SOCK_Send(pstTlsConn->lConnfd, pcData, lLeftLen, &lErrorStatus);
-            if ( 0 < lRet )
-            {
-                COM_IOBUF_SETOUTPUTED_LEN(pstTlsConn->pstSendIobuf, lRet);
-                lLeftLen = COM_IOBUF_GETSAVED_LEN(pstTlsConn->pstSendIobuf);
-
-                /*表明所有数据已经发送完成,继续链表中的buf进行发送*/
-                if ( lLeftLen == 0 )
-                {
-                    COM_Iobuf_Free(pstTlsConn->pstSendIobuf);
-                    pstTlsConn->pstSendIobuf = NULL;
-                    continue;
-                }
-                else if ( 0 < lLeftLen )
-                {
-                    /*还有继续剩余*/
-                    goto SendAgain;
-                }
-            }
-            else 
-            {
-                /*TODO:出现这个，表示阻塞了，可能需要起个一次性的定时器来不停的尝试*/
-                if ( VOS_SOCK_SSL_EWOULDBLOCK == lErrorStatus )
-                {
-                    VOS_Printf("UTL_SSL_Write EWOULDBLOCK!");
-                    return;
-                }
-                else
-                {
-                    VOS_Printf("UTL_SSL_Write error!");
-                    SWM_TLS_ConnDelNotify(pstTlsConn);
-                    return;
-                }
-            }
         }
-        
     }
+    
     #if 0
     
     /*SSL 握手相关, 还没有握手完成状态*/

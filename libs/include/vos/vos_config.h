@@ -64,6 +64,8 @@
 #include <math.h>
 
 #elif VOS_PLAT_LINUX
+#include <sys/signal.h>
+#include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -72,10 +74,8 @@
 #include <sys/ipc.h>
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
-
 #include <sys/ipc.h>
 #include <sys/shm.h>
-
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -83,10 +83,9 @@
 #include <string.h>
 #include <stdarg.h>
 #include <errno.h>
-#include <time.h>
-#include <time.h>
 #include <pthread.h>
 #include <math.h>
+
 
 #include <netdb.h>
 #include <netinet/if_ether.h>
