@@ -20,14 +20,25 @@
 #include "common.h"
 #include "init.h"
 
+typedef struct tagDump
+{
+    CHAR    acString[16];
+    UINT32  uiNums;
+}DUMP_S, *PDUMP_S;
+
 int main()
 {
-    VOS_SM_T stVsmStop={0};
+    VOS_SM_T    stVsmStop={0};
+    //DUMP_S*     pstTemp = NULL;
+
+    printf("dump test=%s\n", pstTemp->acString);
+    //pstTemp->uiNums = 10;
+    //strcpy(pstTemp->acString, "hello");    
     
     /*Í£Ö¹ÐÅºÅ*/
     if( VOS_ERR == VOS_SM_Init(&stVsmStop) )
     {
-        VOS_PrintDebug("VOS Semaphore stop error");
+        VOS_Printf("VOS Semaphore stop error");
         return -1;
     }
     
