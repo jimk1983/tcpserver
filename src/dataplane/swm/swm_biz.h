@@ -164,3 +164,6 @@ LONG SWM_Biz_ChannelMatchUnRegister(ULONG ulBizType);
 
 LONG SWM_Biz_ChannelCheckLen(CHAR *pcPack, UINT32 uiPackLen);
 
+LONG SWM_Biz_ChannelPreGetPackLen(CHAR *pcPack);
+
+

@@ -315,6 +315,51 @@ LONG SWM_Biz_ChannelMatchUnRegister(ULONG ulBizType)
 LONG SWM_Biz_ChannelCheckLen(CHAR *pcPack, UINT32 uiPackLen)
 {
     SWM_BIZ_HEAD_S *pstSwmBiz = (SWM_BIZ_HEAD_S *)pcPack;
+    ULONG           lPackLen = 0;
+    
+    if ( NULL == pcPack  )
+    {
+        VOS_Printf("param error");
+        return VOS_ERR;
+    }
+
+    lPackLen = sizeof(SWM_BIZ_HEAD_S) + VOS_ntohl(pstSwmBiz->uiDataLen);
+
+    if (  uiPackLen == lPackLen )
+    {
+        VOS_Printf("Len check OK");
+        return VOS_OK;
+    }
+
+    if ( uiPackLen < lPackLen  )
+    {
+        VOS_Printf("Len check recv continue");
+        return VOS_SYS_EWOULDBLOCK;
+    }
+    
+    VOS_Printf("packet check len error!, packlen=%d,  head ctrl len=%d", uiPackLen, VOS_ntohs(pstSwmBiz->uiDataLen));
+    return VOS_ERR;
+}
+
+/*****************************************************************************
+ 函 数 名  : SWM_Biz_ChannelPreGetPackLen
+ 功能描述  : 获取当前要接收的包大小
+ 输入参数  : 无
+ 输出参数  : 无
+ 返 回 值  : 
+ 调用函数  : 
+ 被调函数  : 
+ 
+ 修改历史      :
+  1.日    期   : 2018年11月7日
+    作    者   : 蒋康
+    修改内容   : 新生成函数
+
+*****************************************************************************/
+LONG SWM_Biz_ChannelPreGetPackLen(CHAR *pcPack)
+{
+    LONG            lPackLen  = 0;
+    SWM_BIZ_HEAD_S* pstSwmBiz = (SWM_BIZ_HEAD_S *)pcPack;
 
     if ( NULL == pcPack  )
     {
@@ -322,13 +367,8 @@ LONG SWM_Biz_ChannelCheckLen(CHAR *pcPack, UINT32 uiPackLen)
         return VOS_ERR;
     }
 
-    if (  uiPackLen == sizeof(SWM_BIZ_HEAD_S) + VOS_ntohl(pstSwmBiz->uiDataLen) )
-    {
-        VOS_Printf("Len check OK");
-        return VOS_OK;
-    }
-    
-    VOS_Printf("packet check len error!, packlen=%d,  head ctrl len=%d", uiPackLen, VOS_ntohs(pstSwmBiz->uiDataLen));
-    return VOS_ERR;
-}
+    /*当前该包的大小*/
+    lPackLen = sizeof(SWM_BIZ_HEAD_S) + VOS_ntohl(pstSwmBiz->uiDataLen);
 
+    return lPackLen;
+}

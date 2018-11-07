@@ -25,7 +25,7 @@ function main_compile
 	echo "make all"
        mainmake all
 	
-	cp 	$ROOTDIR/output/bin/MainServer $ROOTDIR/../aaa
+	cp 	$ROOTDIR/output/bin/MainServer $ROOTDIR/../pack
 	echo "copy MainServer compeleted!"
 }
 

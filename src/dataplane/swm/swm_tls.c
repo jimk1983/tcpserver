@@ -144,13 +144,15 @@ VOID SWM_TLS_ConnDelNotify(SWM_TLS_CONN_S *pstTlsConn)
 *****************************************************************************/
 VOID SWM_TLS_ConnRecvCb(VOID *pvTlsConn)
 {
-    SWM_TLS_CONN_S          *pstTlsConn = NULL;
+    SWM_TLS_CONN_S        *pstTlsConn = NULL;
     SWM_BIZ_CHANNEL_S     *pstBizChannel = NULL;
-    CHAR                             *pcData = NULL;
+    CHAR                  *pcData = NULL;
     LONG lErrorStatus = 0;
     LONG lError          = 0;
     LONG lRecvLen     = 0;
     LONG lRet            = 0;
+    LONG lLeftDataLen     = 0;
+    LONG lDataLen = 0;
     
     if ( NULL == pvTlsConn )
     {
@@ -192,14 +194,26 @@ VOID SWM_TLS_ConnRecvCb(VOID *pvTlsConn)
         SWM_TLS_ConnDelNotify(pstTlsConn);
         return;
     }
-    /*获取空闲的数据空间*/
-    pcData = COM_IOBUF_GETSAPCE_DATA(pstTlsConn->pstRecvIobuf);
+    
 
     VOS_Printf("swm tls conn recv cb entry, connfd=%d!", pstTlsConn->lConnfd);
     
     /*读取数据*/
     //lError = UTL_SSL_Read(pstTlsConn->pstSsl, pcData, lRecvLen, &lErrorStatus);
-    lError = VOS_SOCK_Recv(pstTlsConn->lConnfd, pcData, lRecvLen, &lErrorStatus);
+    /*新包开始的时候，需要先接收头部信息*/
+    if ( pstTlsConn->pstRecvIobuf->ulPreDataLen == COM_IOBUF_LEN )
+    {
+        lLeftDataLen = SWM_BIZ_HEAD_LEN;
+    }
+    else
+    {
+        lLeftDataLen = pstTlsConn->pstRecvIobuf->ulPreDataLen - pstTlsConn->pstRecvIobuf->ulDataLen;
+    }
+    
+    /*获取空闲的数据空间*/
+    pcData = COM_IOBUF_GETSAPCE_DATA(pstTlsConn->pstRecvIobuf);
+    
+    lError = VOS_SOCK_Recv(pstTlsConn->lConnfd, pcData, lLeftDataLen, &lErrorStatus);
     if ( VOS_ERR == lError )
     {
         if ( VOS_SOCK_EWOULDBLOCK == lErrorStatus )
@@ -227,7 +241,7 @@ VOID SWM_TLS_ConnRecvCb(VOID *pvTlsConn)
     {
          if ( 1 == lError )
          {
-             /*接收到1个字节,还继续接收 */
+             /* 接收到1个字节,还得继续接收 */
              VOS_Printf("UTL_SSL_Read must be continue!");
              /*设置接收到更新的长度*/
              COM_IOBUF_SETINPUTED_LEN(pstTlsConn->pstRecvIobuf, lError);
@@ -237,27 +251,49 @@ VOID SWM_TLS_ConnRecvCb(VOID *pvTlsConn)
          /*继续更新*/
          COM_IOBUF_SETINPUTED_LEN(pstTlsConn->pstRecvIobuf, lError);
     }
+
+    /* 严格根据长度更新来接收，需要获取一个接收的准确的长度信息 */
+    if ( COM_IOBUF_LEN == pstTlsConn->pstRecvIobuf->ulPreDataLen )
+    {
+        pstTlsConn->pstRecvIobuf->ulPreDataLen = SWM_Biz_ChannelPreGetPackLen(pstTlsConn->pstRecvIobuf->pcData);
+        if ( pstTlsConn->pstRecvIobuf->ulPreDataLen >= COM_IOBUF_LEN   )
+        {
+            VOS_Printf("swm pre-check pack length exceed max-length, datalen=%d!",pstTlsConn->pstRecvIobuf->ulPreDataLen );
+
+            SWM_TLS_ConnDelNotify(pstTlsConn);
+            
+            return;
+        }
+    }
     
-    /*开始进入业务识别处理*/
+    lDataLen = pstTlsConn->pstRecvIobuf->ulDataLen;
+    
+    /*严格检查下整包长度，是否需要继续接收*/
+    lRet = SWM_Biz_ChannelCheckLen(pstTlsConn->pstRecvIobuf->pcData, lDataLen);
+    if ( VOS_OK != lRet )
+    {   
+        /*表示需要继续接收*/
+        if ( VOS_SYS_EWOULDBLOCK == lRet )
+        {
+            return;
+        }
+        else
+        {
+            SWM_TLS_ConnDelNotify(pstTlsConn);
+            return;
+        }
+    }
+    
+    /*完整包接收到后，开始进入业务识别处理*/
     if ( EMPTO_BIZTYPEID_UNKNOW == pstBizChannel->ulBizType  )
     {
-        if(EMPTO_BIZTYPEID_UNKNOW == SWM_Biz_ChannelMatch(pstBizChannel, pcData, lError) )
+        if(EMPTO_BIZTYPEID_UNKNOW == SWM_Biz_ChannelMatch(pstBizChannel, pstTlsConn->pstRecvIobuf->pcData, lDataLen) )
         {
             SWM_TLS_ConnDelNotify(pstTlsConn);
             VOS_Printf("swm biz type is unknow!");
             return;
         }
         VOS_Printf("swm biz type is[%d], start match the bizchannel", pstBizChannel->ulBizType);
-    }
-    else
-    {
-        /*先检查下长度，是否需要继续接收*/
-        if ( VOS_ERR == SWM_Biz_ChannelCheckLen(pcData, lError))
-        {
-             VOS_Printf("check the length UTL_SSL_Read must be continue!");
-             COM_IOBUF_SETINPUTED_LEN(pstTlsConn->pstRecvIobuf, lError);
-             return;
-        }
     }
 
     /*将接收到的Iobuf 推送给下一个节点 */
@@ -617,12 +653,14 @@ LONG SWM_TLS_ConnRelease(SWM_TLS_CONN_S *pstTlsConn)
     }
 
     VOS_Printf("SWM_TLS_ConnRelease start!fd=[%d]", pstTlsConn->lConnfd);
-
+    
     /* 将网络去注册放在DelNotify中,快速关闭，否则会产生大量的0错误事件*/
     if(VOS_ERR == RCT_API_NetOpsEventUnRegister(&pstTlsConn->stNetEvtOps) )
     {
         VOS_Printf("RCT_Reactor_NetEvtOptsUnRegister error!");
     }
+    
+    VOS_SOCK_Shutdown(pstTlsConn->lConnfd);
     
     /*注意,一定要先注销老化,否则会再次进入,出现问题*/
     if(VOS_ERR == RCT_API_ExpireOpsEventUnRegister(&pstTlsConn->stExpireOps) )
@@ -645,9 +683,9 @@ LONG SWM_TLS_ConnRelease(SWM_TLS_CONN_S *pstTlsConn)
     SWM_TLS_PipeConnRelease(pstTlsConn);
     
     SWM_Biz_ChannelRelease(pstTlsConn->pstBizChannel);
-    
+
     VOS_SOCK_Close(pstTlsConn->lConnfd);
-   
+    
     VOS_Free((CHAR *)pstTlsConn);
     
     return VOS_OK;

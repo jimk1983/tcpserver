@@ -23,13 +23,14 @@
 /*设计一个IOBUF, 可以挂链*/
 typedef struct tagComIobuf
 {
-    VOS_DLIST_NODE_S    stNode;             /*挂链用的节点*/
-    ULONG                       ulMagic;            /*本节点最大的数据长度*/
-    ULONG                       ulMaxLen;         /*接收包的数据最大的长度*/         
-    ULONG                       ulDataLen;        /*本次的接收到的包的大小或者待发送的大小*/
-    ULONG                       ulOffset;           /*数据偏移*/
-    LONG                         lLeftLen;          /*剩余未有使用的缓存长度*/
-    CHAR                         pcData[0];        /*数据起始地址*/
+    VOS_DLIST_NODE_S    stNode;           /*挂链用的节点*/
+    ULONG               ulMagic;          /*本节点最大的数据长度*/
+    ULONG               ulMaxLen;         /*接收包的数据最大的长度*/  
+    ULONG               ulPreDataLen;     /*预先获取的要接收的包的大小*/
+    ULONG               ulDataLen;        /*本次的接收到的包的大小或者待发送的大小*/
+    ULONG               ulOffset;         /*数据偏移*/
+    LONG                lLeftLen;         /*剩余未有使用的缓存长度*/
+    CHAR                pcData[0];        /*数据起始地址*/
 }COM_IOBUF_S;
 
 /**************************iOBUF内的未使用数据使用*************************************/

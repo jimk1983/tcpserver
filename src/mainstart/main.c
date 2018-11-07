@@ -29,11 +29,6 @@ typedef struct tagDump
 int main()
 {
     VOS_SM_T    stVsmStop={0};
-    //DUMP_S*     pstTemp = NULL;
-
-    printf("dump test=%s\n", pstTemp->acString);
-    //pstTemp->uiNums = 10;
-    //strcpy(pstTemp->acString, "hello");    
     
     /*Õ£÷π–≈∫≈*/
     if( VOS_ERR == VOS_SM_Init(&stVsmStop) )
@@ -57,6 +52,7 @@ int main()
     }
     
     /*À≥±„≤‚ ‘ π”√VOS–≈∫≈¡ø*/
+    VOS_Printf("**********UPFileServer Running***********");
     VOS_SM_P(&stVsmStop,0);
     Main_EnvUnInit();
     VOS_SM_Destroy(&stVsmStop);

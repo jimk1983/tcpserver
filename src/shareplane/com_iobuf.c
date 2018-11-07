@@ -53,6 +53,7 @@ COM_IOBUF_S *COM_Iobuf_Malloc(ULONG ulMid)
 
     pstIobuf->ulMagic     = COM_IOBUF_MAGIC;
     pstIobuf->lLeftLen    = COM_IOBUF_LEN;
+    pstIobuf->ulPreDataLen  = COM_IOBUF_LEN;
     pstIobuf->ulMaxLen  = COM_IOBUF_LEN;
 
     return pstIobuf;
