@@ -61,9 +61,10 @@ SWM_BIZ_CHANNEL_S *SWM_Biz_ChannelCreate(LONG lSockfd)
     }
     
     /* 节省空间，以后Hash提高性能和利用率*/
-    pstBizChannel->stClientInfo.ulClientAddr = VOS_atoi(acAddr);
+    pstBizChannel->stClientInfo.ulClientAddr = VOS_aton(acAddr);
     
     /* 推送节点源头*/
+    VOS_DLIST_INIT(&pstBizChannel->stNode);
     VOS_DLIST_INIT(&pstBizChannel->stPipeHead);
 
     /*发送队列*/
@@ -75,7 +76,9 @@ SWM_BIZ_CHANNEL_S *SWM_Biz_ChannelCreate(LONG lSockfd)
         return NULL;
     }
     
+    pstBizChannel->ulPipeNum++;
     pstBizChannel->ulExitConfirm = VOS_FALSE;
+    pstBizChannel->ulBindFlags = VOS_FALSE;
     
     VOS_Printf("Create the Biz channel node ok, sockfd=%d, client addr=[%s:%d]",
         lSockfd, acAddr, pstBizChannel->stClientInfo.ulClientPort);
@@ -317,7 +320,8 @@ LONG SWM_Biz_ChannelCheckLen(CHAR *pcPack, UINT32 uiPackLen)
     SWM_BIZ_HEAD_S *pstSwmBiz = (SWM_BIZ_HEAD_S *)pcPack;
     ULONG           lPackLen = 0;
     
-    if ( NULL == pcPack  )
+    if ( NULL == pcPack 
+        || uiPackLen < SWM_BIZ_HEAD_LEN )
     {
         VOS_Printf("param error");
         return VOS_ERR;

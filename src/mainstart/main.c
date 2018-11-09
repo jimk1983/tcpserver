@@ -52,7 +52,7 @@ int main()
     }
     
     /*顺便测试使用VOS信号量*/
-    VOS_Printf("**********UPFileServer Running***********");
+    VOS_Printf("**********UPVersion Server Running***********");
     VOS_SM_P(&stVsmStop,0);
     Main_EnvUnInit();
     VOS_SM_Destroy(&stVsmStop);

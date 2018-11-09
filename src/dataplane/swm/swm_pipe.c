@@ -321,8 +321,7 @@ SWM_PIPE_CONN_S *SWM_TLS_PipeConnFoundTlsNode(SWM_BIZ_CHANNEL_S   *pstBizChannel
         }
     }
 
-    VOS_Printf("swm tls pipe found is ok!pipe=%p!", pstPipeNode);
-    
+    //VOS_Printf("swm tls pipe found is ok!pipe=%p!", pstPipeNode);
     return pstPipeNode;
 }
 
@@ -356,8 +355,8 @@ LONG SWM_TLS_PipeTransBufToNextPipeNode(SWM_PIPE_CONN_S *pstPipeCurNode, COM_IOB
         return SWM_PIPE_IOBUF_PARAM_ERR;
     }
 
-    VOS_Printf("pstPipeCurNode=%p, stnode=%p, next=%p, prev=%p, ioBuf=%p!",
-        pstPipeCurNode, &pstPipeCurNode->stNode, pstPipeCurNode->stNode.next, pstPipeCurNode->stNode.prev, pstIobuf);
+    //VOS_Printf("pstPipeCurNode=%p, stnode=%p, next=%p, prev=%p, ioBuf=%p!",
+    //    pstPipeCurNode, &pstPipeCurNode->stNode, pstPipeCurNode->stNode.next, pstPipeCurNode->stNode.prev, pstIobuf);
 
     /*获取推送的下一个节点，该节点必须存在一种*/
     pstPipeNextNode  = VOS_DLIST_ENTRY(pstPipeCurNode->stNode.next, SWM_PIPE_CONN_S, stNode);
@@ -459,5 +458,125 @@ LONG SWM_TLS_PipeTransBufToPrePipeNode(SWM_PIPE_CONN_S *pstPipeCurNode, COM_IOBU
 }
 
 
+/*****************************************************************************
+ 函 数 名: SWM_TLS_PipeTransCtrlToNextPipeNode
+ 功能描述  : 通知下一个节点的控制命令
+ 输入参数  :   SWM_PIPE_CONN_S *pstPipeCurNode  ---当前节点
+           ULONG ulCmdCode                  ---控制命令
+ 输出参数  : 无
+ 返 回 值  : 
+ 调用函数  : 
+ 被调函数  : 
+ 
+ 修改历史      :
+  1.日    期   : 2016年11月9日
+    作    者   : 蒋康
+    修改内容   : 新生成函数
+
+*****************************************************************************/
+LONG SWM_TLS_PipeTransCtrlToNextPipeNode(SWM_PIPE_CONN_S *pstPipeCurNode, ULONG ulCmdCode)
+{
+    SWM_PIPE_CONN_S  *pstPipeNextNode = NULL;
+    VOS_DLIST_NODE_S *pstNode = NULL;
+    LONG lRet = SWM_PIPE_IOBUF_OK;
+        
+    if ( NULL == pstPipeCurNode )
+    {
+        VOS_Printf("param error!");
+        return SWM_PIPE_IOBUF_PARAM_ERR;
+    }
+
+    /*获取推送的下一个节点，该节点必须存在一种*/
+    pstPipeNextNode  = VOS_DLIST_ENTRY(pstPipeCurNode->stNode.next, SWM_PIPE_CONN_S, stNode);
+    if ( NULL == pstPipeNextNode )
+    {
+        VOS_Printf("get next pipe node error!");
+        return SWM_PIPE_IOBUF_PIPENODE_ERR;
+    }
+
+    pstNode = &pstPipeNextNode->stNode;
+   
+    /*下一个节点，不能是表头，而是实际存在的业务管道节点*/
+    if ( pstNode->next == pstNode->prev )
+    {
+        VOS_Printf("pipe node next is empty!");
+        return SWM_PIPE_IOBUF_PIPENODE_ERR;
+    }
+
+    /*找到下一个的Upper上行节点的执行函数*/
+    if ( NULL == pstPipeNextNode->stPipeCtrlProc.pvcbFunc )
+    {
+        VOS_Printf("pipe node next not found the upper function!");
+        return SWM_PIPE_IOBUF_PIPEFUNC_ERR;
+    }
+    
+    /*从前一个节点过来的推送给上行的执行*/
+    lRet =  ((swm_pipe_ctrlproc_cb)pstPipeNextNode->stPipeCtrlProc.pvcbFunc)(
+                    pstPipeNextNode->stPipeCtrlProc.pvUserData, ulCmdCode);
+    
+    return lRet;
+}
+
+/*****************************************************************************
+ 函 数 名  : SWM_TLS_PipeTransCtrlToPrePipeNode
+ 功能描述  : 给前一层Pipe调用的管道发送接口
+ 输入参数  : SWM_PIPE_CONN_S *pstPipeCurNode  
+             COM_IOBUF_S *pstIobuf            
+ 输出参数  : 无
+ 返 回 值  : 
+ 调用函数  : 
+ 被调函数  : 
+ 
+ 修改历史      :
+  1.日    期   : 2016年11月9日
+    作    者   : jimk
+    修改内容   : 新生成函数
+
+*****************************************************************************/
+LONG SWM_TLS_PipeTransCtrlToPrePipeNode(SWM_PIPE_CONN_S *pstPipeCurNode, ULONG ulCmdCode)
+{
+    SWM_PIPE_CONN_S  *pstPipePrevNode = NULL;
+    LONG lRet = SWM_PIPE_IOBUF_OK;
+    VOS_DLIST_NODE_S *pstNode = NULL;
+        
+    if ( NULL == pstPipeCurNode )
+    {
+        VOS_Printf("param error!");
+        return SWM_PIPE_IOBUF_PARAM_ERR;
+    }
+    
+    /*获取推送的前一个节点，该节点必须存在*/
+    pstPipePrevNode  = VOS_DLIST_ENTRY(pstPipeCurNode->stNode.prev, SWM_PIPE_CONN_S, stNode);
+    if ( NULL == pstPipePrevNode )
+    {
+        VOS_Printf("get next pipe node error!");
+        return SWM_PIPE_IOBUF_PIPENODE_ERR;
+    }
+    pstNode = &pstPipePrevNode->stNode;
+        
+    if ( pstNode->next == pstNode->prev )
+    {
+        VOS_Printf("pipe node error!");
+        return SWM_PIPE_IOBUF_PIPENODE_ERR;
+    }
+    
+    /*取出前一个节点的Ctrl接口*/
+    if ( NULL == pstPipePrevNode->stPipeCtrlProc.pvcbFunc )
+    {
+        VOS_Printf("pipe node next not found the down function!");
+        return SWM_PIPE_IOBUF_PIPEFUNC_ERR;
+    }
+    
+    /*执行前一个节点的DOWN接口*/
+    lRet =  ((swm_pipe_ctrlproc_cb)pstPipePrevNode->stPipeCtrlProc.pvcbFunc)(
+                    pstPipePrevNode->stPipeCtrlProc.pvUserData, ulCmdCode);
+    if ( VOS_OK != lRet )
+    {
+        VOS_Printf("next pipe deal the iobuf error!");
+        return lRet;
+    }
+    
+    return lRet;
+}
 
 

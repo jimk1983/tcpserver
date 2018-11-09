@@ -28,8 +28,8 @@ UPF_CTX_S *g_pstUPFCtx = NULL;
  函 数 名  : UPF_CtxBizMatch
  功能描述  :    UpFile 文件升级业务识别,识别后会新建一个UPF的业务管道节点
  输入参数  :    SWM_BIZ_CHANNEL_S *pstBizChannel  --业务通道，管道在里面
-            CHAR *pcData                                    --数据
-            ULONG ulDataLen                               --数据长度
+            CHAR *pcData                      --数据
+            ULONG ulDataLen                   --数据长度
  输出参数  : 无
  返 回 值  : 
  调用函数  : 
@@ -58,15 +58,15 @@ ULONG UPF_CtxBizMatch(SWM_BIZ_CHANNEL_S *pstBizChannel, CHAR *pcData, ULONG ulDa
     if ( UPF_PROTO_MARK1 == VOS_ntohl(pstUpfHead->uiMark1)
         && UPF_PROTO_MARK2 == VOS_ntohl(pstUpfHead->uiMark2) ) 
     {
-        /*匹配后，创建本通道的NEM节点*/
+        /*匹配后，创建本通道的UPF节点*/
         if ( VOS_ERR == UPF_Conn_Create(pstBizChannel) )
         {
             VOS_Printf("pfw connect node create error!");
             return EMPTO_BIZTYPEID_UNKNOW;
         }
-        
+        pstBizChannel->ulPipeNum++;
         VOS_Printf("pfw biz type has been matched and create nem node OK!");
-        return EMPTO_BIZTYPEID_PFM;
+        return EMPTO_BIZTYPEID_UPF;
     }
     
     return EMPTO_BIZTYPEID_UNKNOW;
@@ -168,11 +168,11 @@ VOID UPF_CtxTaskInit(VOID *pvArg)
     /*业务上下文初始化*/
     if ( VOS_ERR == UPF_CtxCreate() )
     {
-        VOS_Printf("Pfw mgt ctx create!!");
+        VOS_Printf("UPF ctx create!!");
         return;
     }
 
-    VOS_Printf("Pfw ctx task initialize OK!");
+    VOS_Printf("UPF ctx task initialize OK!");
 }
 
 
@@ -216,11 +216,11 @@ LONG UPF_CtxInit()
     /*先注册上下文初始化*/
     if ( VOS_ERR == RCT_API_EnvTaskInitRegister(UPF_CtxTaskInit, NULL, RCT_TYPE_DP_SSL,RCT_SUBTYPE_SSL_UPF, UPF_CtxTaskUnInit) )
     {
-        VOS_Printf("PFW ctx inti register error!!");
+        VOS_Printf("UPF ctx inti register error!!");
         return VOS_ERR;
     }
     
-    VOS_Printf("PFW Ctx init .......................OK!");
+    VOS_Printf("UPF Ctx init .......................OK!");
     return VOS_OK;
 }
 

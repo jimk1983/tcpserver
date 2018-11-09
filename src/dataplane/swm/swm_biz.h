@@ -32,7 +32,8 @@ typedef enum
 	EMPTO_BIZTYPEID_NUMS
 }EMPTO_BIZTID_E;
 
-
+/*发送阻塞的最大尝试次数，超过就直接断开*/
+#define SWM_SNDBLOCK_MAXNUMS          10
 
 /*该业务通道未绑定*/
 #define SWM_BIZ_USER_UNBINDED     0
@@ -87,6 +88,9 @@ struct tagSWMBizChannel
 
     /*是否结束本通道*/
     ULONG   ulExitConfirm;
+
+    /*是否客户端阻塞发送不成功，断开连接, 最大SWM_SNDBLOCK_MAXNUMS*/
+    ULONG   ulSndBlockCount;
     
     /*本通道的客户端信息*/
     SWM_BIZ_CLIENT_INFO_S 	stClientInfo;
@@ -94,7 +98,6 @@ struct tagSWMBizChannel
     //SWM_BIZ_USER_INFO_S    	stUserInfo;
     /*本通道的网关信息*/
     //SWM_BIZ_VT_INFO_S       stVtInfo;
-    
     /*发送队列*/
     COM_IOBUF_QUE_S   *pstSwmSendQueue;
     /*ssl信息*/

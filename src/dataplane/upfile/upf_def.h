@@ -36,11 +36,10 @@ typedef  enum
 #define UPF_DEVLAB_LEN      32
 
 #define UPF_FILELEN         32
-#define UPF_FILEVALEN       16
+#define UPF_FILEVALEN       32
 /*保活信息*/
 typedef struct tagUpfKVPInfo
 {
-	CHAR        acDeviceLab[UPF_DEVLAB_LEN];    /*设备标签*/
 	UINT32      uiLastVersion;				    /*当前最新版本*/
 	UINT32      uiIntervalRate;				    /*间隔时间*/
     CHAR 		acFileAddress[UPF_FILELEN];		/*XML文件地址：192.168.1.1：8080/aaa.xml*/
@@ -73,7 +72,7 @@ typedef struct tagUPFHead
     UINT32          uiCtrlCode;             /*控制消息码*/
     UINT32          uiCtrlLength;           /*数据长度*/
     CHAR	        acDeviceLab[UPF_DEVLAB_LEN];	/*设备标签*/
-}UPF_HEAD_S;
+}UPF_HEAD_S, *PUPF_HEAD_S;
 
 /*****************************************************************/
 typedef struct tagUPFConn                UPF_CONN_S;
@@ -94,6 +93,10 @@ struct tagUPFConn
     RCT_EXPIROPT_EVENT_S        stExpireOps;
 
     COM_IOBUF_S *               pstRcvIobuf;
+
+    /*文件片: 目前仅支持小文件，16K*n
+      大文件不能采用该做法，会占内存太高, 可以考虑分多块获取*/
+    VOS_DLIST_NODE_S            stFileSlice;
 };
 
 

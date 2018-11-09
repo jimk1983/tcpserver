@@ -31,10 +31,11 @@ typedef enum SwmPipeType
 {
     SWM_PIPE_TYPE_SRC_TLS = 0,          /*TLS源节点*/
     SWM_PIPE_TYPE_SRC_DTLS,             /*UDPS源节点*/
-    SWM_PIPE_TYPE_FILTER,                  /*中间过滤节点*/
-    SWM_PIPE_TYPE_BIZ_NEM,               /*网络扩展的业务节点*/
-    SWM_PIPE_TYPE_BIZ_PFW,               /*端口转发的业务节点*/
-    SWM_PIPE_TYPE_BIZ_TCM,               /*终端检查的业务节点*/
+    SWM_PIPE_TYPE_FILTER,               /*中间过滤节点*/
+    SWM_PIPE_TYPE_BIZ_UPF,              /*网络扩展的业务节点*/
+    SWM_PIPE_TYPE_BIZ_NEM,              /*网络扩展的业务节点*/
+    SWM_PIPE_TYPE_BIZ_PFW,              /*端口转发的业务节点*/
+    SWM_PIPE_TYPE_BIZ_TCM,              /*终端检查的业务节点*/
     
     SWM_PIPE_TYPE_END
 }SWM_PIPE_TYPE_E;
@@ -110,5 +111,11 @@ LONG    SWM_TLS_PipeTransBufToNextPipeNode(SWM_PIPE_CONN_S *pstPipeCurNode, COM_
 LONG    SWM_TLS_PipeTransBufToPrePipeNode(SWM_PIPE_CONN_S *pstPipeCurNode, COM_IOBUF_S *pstIobuf);
 
 SWM_PIPE_CONN_S *SWM_TLS_PipeConnFoundTlsNode(SWM_BIZ_CHANNEL_S   *pstBizChannel);
+
+LONG    SWM_TLS_PipeTransCtrlToNextPipeNode(SWM_PIPE_CONN_S *pstPipeCurNode, ULONG ulCmdCode);
+
+LONG    SWM_TLS_PipeTransCtrlToPrePipeNode(SWM_PIPE_CONN_S *pstPipeCurNode, ULONG ulCmdCode);
+
+
 
 

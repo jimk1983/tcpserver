@@ -21,12 +21,20 @@
 typedef enum tagSwmTslStatus
 {
     SWM_TLS_SSL_STATUS_INIT = 0,            /*初始化状态*/
-    SWM_TLS_SSL_STATUS_ACCEPTING,       /*握手中*/
-    SWM_TLS_SSL_STATUS_ACCEPTED,         /*握手完成*/
+    SWM_TLS_SSL_STATUS_ACCEPTING,           /*握手中*/
+    SWM_TLS_SSL_STATUS_ACCEPTED,            /*握手完成*/
 
     SWM_TLS_SSL_STATUS_NUMS
 }SWM_TLS_SSL_STATUS_E;
 
+/*控制管道的码*/
+typedef enum tagSwmCtrlCmdCode
+{
+    SWM_CTRLCMD_UNKNOW = 0,
+    SWM_CTRLCMD_SNDOUT_COMPELETED,   /*发送完成，队列已经为空*/
+
+    SWM_CTRLCMD_NUMS
+}SWM_CTRL_CMDCODE_E;
 
 
 /*SWM业务TLS节点*/

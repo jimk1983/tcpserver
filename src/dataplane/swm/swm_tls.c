@@ -364,9 +364,13 @@ VOID SWM_TLS_ConnSendCb(VOID *pvTlsConn)
     
     /*先看看队列是不是空的,如果是空的，则关闭发送*/
     if ( VOS_TRUE == COM_Iobuf_QueIsEmpty(pstTlsConn->pstBizChannel->pstSwmSendQueue))
-    {
-        /*关闭发送*/
+    {   
+        /*先关闭发送*/
         (VOID)RCT_API_NetOpsEventCtrl(&pstTlsConn->stNetEvtOps, VOS_EPOLL_CTRL_OUTCLOSE);
+
+        /*通知上一级已经完成了发送的情况*/
+        (VOID)SWM_TLS_PipeTransCtrlToNextPipeNode(&pstTlsConn->stTlsPipe, SWM_CTRLCMD_SNDOUT_COMPELETED);
+        
         return;
     }
 
@@ -408,6 +412,8 @@ SendAgain:
             /*表明所有数据已经发送完成,继续链表中的buf进行发送*/
             if ( lLeftLen == 0 )
             {
+                /*每次发送成功就重置该计数*/
+                pstTlsConn->pstBizChannel->ulSndBlockCount=0;
                 COM_Iobuf_Free(pstTlsConn->pstSendIobuf);
                 pstTlsConn->pstSendIobuf = NULL;
                 continue;
@@ -415,15 +421,21 @@ SendAgain:
             else if ( 0 < lLeftLen )
             {
                 /*还有继续剩余*/
-                goto SendAgain;
+                return;
             }
         }
         else 
         {
-            /*TODO:出现这个，表示阻塞了，可能需要起个一次性的定时器来不停的尝试*/
+            /*TODO:出现这个，表示阻塞了，尝试多次，如果一直发送不成功，则断开该链接*/
             if ( VOS_SOCK_SSL_EWOULDBLOCK == lErrorStatus )
             {
                 VOS_Printf("UTL_SSL_Write EWOULDBLOCK!");
+                if ( pstTlsConn->pstBizChannel->ulSndBlockCount >= SWM_SNDBLOCK_MAXNUMS )
+                {
+                    VOS_Printf("Send ewould block error!count=%d\n",pstTlsConn->pstBizChannel->ulSndBlockCount );
+                    SWM_TLS_ConnDelNotify(pstTlsConn);
+                }
+                pstTlsConn->pstBizChannel->ulSndBlockCount++;
                 return;
             }
             else

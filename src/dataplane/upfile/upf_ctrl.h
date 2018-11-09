@@ -19,4 +19,4 @@
 
 
 
-INT32 UPF_CtrlHandler(UPF_CONN_S *pstPFWConn);
+INT32 UPF_CtrlHandler(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIobuf);
