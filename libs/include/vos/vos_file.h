@@ -32,6 +32,8 @@ struct tagVosDirsFilesInfo{
     INT32   uiFileSize;                                                  /*文件大小*/
 };
 
+LONG VOS_DirGetCurrentPath(CHAR *pcDirPath, INT32 iMaxLen);
+
 LONG VOS_DirIsExist(const CHAR *pcDirPath);
 
 LONG VOS_DirsCreate(CHAR *pcDirPath);

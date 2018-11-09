@@ -36,7 +36,7 @@ typedef  enum
 #define UPF_DEVLAB_LEN      32
 
 #define UPF_FILELEN         32
-#define UPF_FILEVALEN       32
+#define UPF_FILEVALEN       36
 /*保活信息*/
 typedef struct tagUpfKVPInfo
 {

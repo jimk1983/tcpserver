@@ -280,8 +280,7 @@ LONG UPF_Conn_PipeConnCtrlProc(VOID *pvhandler, ULONG ulCtrlCmd)
                     return VOS_ERR;
                 }
             }
-            
-            break;
+        break;
     
     }
 

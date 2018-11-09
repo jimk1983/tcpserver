@@ -21,10 +21,12 @@
 
 #include "common.h"
 #include "init.h"
+/*管理面*/
+#include "vgm/vgm_ctx.h"
+#include "fsm/fsm_ctx.h"
+/*业务面*/
 #include "swm/swm_ctx.h"
 #include "upfile/upf_ctx.h"
-#include "vgm/vgm_ctx.h"
-
 
 
 /*****************************************************************************
@@ -51,8 +53,16 @@ INT32 Main_EnvInit()
     }
 
     /********管理面**********/
+    /*网关管理*/
     if ( VOS_ERR == VGM_CtxInit() )
     {
+        Main_EnvUnInit();
+        return VOS_ERR;
+    }
+
+    /*文件资源服务器*/
+    if ( VOS_ERR == FSM_CtxInit() )
+    {  
         Main_EnvUnInit();
         return VOS_ERR;
     }
