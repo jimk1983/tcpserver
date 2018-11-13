@@ -23,13 +23,13 @@
 const FSM_CONF_INFO_S g_starryFsmConfig[]=
 {
     {
-        "testSmall.xml"
+        "/testSmall.xml"
     },
     {
-        "testBig.xml"
+        "/testBig.xml"
     },
     {
-        "TerminalCollector.exe"
+        "/TerminalCollector.exe"
     },
 };
 

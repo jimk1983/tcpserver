@@ -109,13 +109,16 @@ Rotation is separate from addition to prevent recomputation.
 
 
 /*强制将MD5转换为字符串格式*/
-void MD5_ValToString(CHAR *pcMd5Val, CHAR *pcOutStr)
+void MD5_ValToString_s(UCHAR *pcMd5Val, UINT32 uiOutMaxLen, UCHAR *pcOutStr)
 {
-    UINT32 uiCount = 0;
+    UINT32 uiIndex = 0;
+    UINT32 lRet = 0;
     
-    for(uiCount = 0; uiCount < MD5_SIZE ; uiCount++)
+    VOS_Mem_Zero(pcOutStr, uiOutMaxLen);
+    
+    for(uiIndex = 0; uiIndex < MD5_SIZE ; uiIndex++)
     {
-        VOS_Snprintf(pcOutStr+uiCount, MD5_SIZE, "%02x", pcMd5Val[uiCount]);
+        lRet += VOS_Snprintf(pcOutStr+lRet, uiOutMaxLen, "%02x", pcMd5Val[uiIndex]);
     }
 }
 
@@ -170,7 +173,7 @@ void MD5Update(MD5_CTX *context, unsigned char *input, unsigned int inputLen)
 /* MD5 finalization. Ends an MD5 message-digest operation, writing the
   the message digest and zeroizing the context.
  */
-void MD5Final (unsigned char digest[16], MD5_CTX *context)
+void MD5Final (unsigned char digest[MD5_SIZE], MD5_CTX *context)
 {
   unsigned char bits[8];
   unsigned int index, padLen;

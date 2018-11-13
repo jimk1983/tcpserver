@@ -40,13 +40,53 @@ PFSM_MGR_CTX_S  g_pstFsmMgrCtx = NULL;
     修改内容   : 新生成函数
 
 *****************************************************************************/
-FSM_FILE_INFO_S *FSM_MgrFileInfoCreate(CHAR *pcFileDir,const CHAR *pcFileName)
+FSM_FILE_INFO_S *FSM_MgrFileInfoCreate(CHAR *pcFileDir, const CHAR *pcFileName)
 {
-    FSM_FILE_INFO_S *pstFileInfo = NULL;
-
+    FSM_FILE_INFO_S*    pstFileInfo     = NULL;
+    UCHAR*              pucFileContent  = NULL;
+    UINT32              uiFileSize      = 0; 
+    MD5_CTX             stMd5Ctx            = {0};
+    UCHAR               aucDigest[MD5_SIZE] = {0};
     
-    
+    pstFileInfo = (PFSM_FILE_INFO_S)malloc(sizeof(FSM_FILE_INFO_S));
+    if ( NULL ==  pstFileInfo )
+    {
+        return NULL;
+    }
 
+    VOS_Mem_Zero(pstFileInfo, sizeof(FSM_FILE_INFO_S));
+
+    VOS_RWLOCK_INIT(pstFileInfo->stLock);
+    VOS_DLIST_INIT(&pstFileInfo->stFileList);
+
+    VOS_StrCat(pstFileInfo->stFileInfo.acFullName, pcFileDir);
+    VOS_StrCat(pstFileInfo->stFileInfo.acFullName, pcFileName);
+
+    /*版本信息*/
+    pstFileInfo->stFileInfo.stFileResInfo.uiFileVersion     = FSM_APP_VERSION;
+    pstFileInfo->stFileInfo.stFileResInfo.uiFileSize        = 0;
+    pstFileInfo->stFileInfo.stFileResInfo.uiFileCRCAlgm     = 0;
+    VOS_Mem_Zero(pstFileInfo->stFileInfo.stFileResInfo.acFileCRCVal,FSM_VAL_LEN);
+
+    /*直接文件大小和内容获取*/
+    if(VOS_ERR == VOS_FileRead(pstFileInfo->stFileInfo.acFullName, 
+                                (INT32 *)&uiFileSize,
+                                &pucFileContent))
+    {
+        VOS_Printf("Get file size error, file=%s", pstFileInfo->stFileInfo.acFullName);
+        free(pstFileInfo);
+        return NULL;
+    }
+    
+    MD5Init(&stMd5Ctx);
+    MD5Update(&stMd5Ctx, pucFileContent, uiFileSize);
+    MD5Final(aucDigest,&stMd5Ctx);
+
+    free(pucFileContent);
+    pstFileInfo->stFileInfo.stFileResInfo.uiFileSize = uiFileSize;
+
+    MD5_ValToString_s(aucDigest, FSM_VAL_LEN, (UCHAR *)pstFileInfo->stFileInfo.stFileResInfo.acFileCRCVal);
+    
     return pstFileInfo;
 }
 
@@ -111,7 +151,6 @@ INT32   FSM_MgrEnvInit()
     
     g_pstFsmMgrCtx->uiCurNums = 0;
 
-    
     if( VOS_ERR == VOS_DirGetCurrentPath(g_pstFsmMgrCtx->acCurDir, VOS_DIRSNAME_LEN) )
     {
         free(g_pstFsmMgrCtx);

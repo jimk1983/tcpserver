@@ -41,7 +41,7 @@ void MD5Init(MD5_CTX *);
 void MD5Update(MD5_CTX *, unsigned char *, unsigned int);
 void MD5Final(unsigned char [MD5_SIZE], MD5_CTX *);
 
-void MD5_ValToString(CHAR *pcMd5Val, CHAR *pcOutStr);
+void MD5_ValToString_s(UCHAR *pcMd5Val,UINT32 uiOutMaxLen, UCHAR *pcOutStr);
 #ifdef __cplusplus
 }
 #endif
