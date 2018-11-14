@@ -18,6 +18,7 @@
 ******************************************************************************/
 #include "common.h"
 #include "swm/swm_pub.h"
+#include "fsm/fsm_pub.h"
 #include "upfile/upf_pub.h"
 
 
@@ -131,7 +132,7 @@ LONG UPF_Conn_TransBufToDownPipeNode(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIob
     if (SWM_PIPE_IOBUF_EWOULDBLOCK == lRet )
     { 
         VOS_Printf("ewould block error!");
-        return VOS_OK;
+        return VOS_SYS_EWOULDBLOCK;
     }
     else if (SWM_PIPE_IOBUF_OK == lRet )
     {
@@ -243,9 +244,6 @@ LONG UPF_Conn_PipeConnDataDownProc(VOID *pvhandler, COM_IOBUF_S *pstIobuf)
 LONG UPF_Conn_PipeConnCtrlProc(VOID *pvhandler, ULONG ulCtrlCmd)
 {
     UPF_CONN_S *pstConn = NULL;
-    LONG        lRet = 0;
-    VOS_DLIST_NODE_S *pstNode = NULL;
-    COM_IOBUF_S *pstIobuf = NULL;
     
     if ( NULL == pvhandler )
     {
@@ -260,26 +258,7 @@ LONG UPF_Conn_PipeConnCtrlProc(VOID *pvhandler, ULONG ulCtrlCmd)
     switch(ulCtrlCmd)
     {
         case SWM_CTRLCMD_SNDOUT_COMPELETED:
-            /*检查是否有文件片还需要继续发送*/
-            while( VOS_OK != VOS_Node_IsEmpty(&pstConn->stFileSlice))
-            {
-                /*保证需要尾部插入的方式进行排序*/
-                VOS_Node_HeadGet(&pstConn->stFileSlice, &pstNode);
-                pstIobuf = VOS_DLIST_ENTRY(pstNode, COM_IOBUF_S, stNode);
-                VOS_ASSERT(NULL != pstIobuf);
-                /*继续发送剩余的包*/
-                lRet = SWM_TLS_PipeTransBufToPrePipeNode(&pstConn->stPipe, pstIobuf);
-                if (SWM_PIPE_IOBUF_EWOULDBLOCK == lRet )
-                { 
-                    break;
-                }
-                else
-                {
-                    VOS_Printf("Tls connect node pipe to next node error, notify all pipe goto expire!");
-                    UPF_Conn_DelNotify(pstConn);
-                    return VOS_ERR;
-                }
-            }
+            
         break;
     
     }
@@ -401,7 +380,6 @@ LONG UPF_Conn_Create(SWM_BIZ_CHANNEL_S *pstBizChannel)
     VOS_Mem_Zero((CHAR *)&pstConn->stPipe,sizeof(SWM_PIPE_CONN_S));
 
     VOS_DLIST_INIT(&pstConn->stPipe.stNode);
-    VOS_DLIST_INIT(&pstConn->stFileSlice);
     
     /*初始化网络扩展的Pipe*/
     SWM_PIPE_CONN_INIT(
@@ -422,6 +400,8 @@ LONG UPF_Conn_Create(SWM_BIZ_CHANNEL_S *pstBizChannel)
         VOS_Free((CHAR *)pstConn);
         return VOS_ERR;
     } 
+
+    pstConn->uiMgrChunkStatus = UPF_TRNSTATUS_SNDEND;
 
                 
     VOS_Printf("UPF Conn Create OK");

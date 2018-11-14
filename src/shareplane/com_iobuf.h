@@ -31,7 +31,7 @@ typedef struct tagComIobuf
     ULONG               ulOffset;         /*数据偏移*/
     LONG                lLeftLen;         /*剩余未有使用的缓存长度*/
     CHAR                pcData[0];        /*数据起始地址*/
-}COM_IOBUF_S;
+}COM_IOBUF_S, *PCOM_IOBUF_S;
 
 /**************************iOBUF内的未使用数据使用*************************************/
 /*获取未使用的数据*/

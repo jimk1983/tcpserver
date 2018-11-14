@@ -23,30 +23,143 @@
 
 PFSM_MGR_CTX_S  g_pstFsmMgrCtx = NULL;
 
-
 /*****************************************************************************
- 函 数 名  : FSM_MgrFileInfoCreate
- 功能描述  : 创建信息
- 输入参数  : CHAR *pcFileDir  
-             CHAR *pcFile     
+ 函 数 名  : FSM_MgrFileSpliceCreate
+ 功能描述  : 文件片的创建
+ 输入参数  : FSM_FILE_INFO_S *pstFileInfo ---创建文件片 
+             CHAR *pcFileContent        ---文件内容   
+             UINT32 uiFileLen           ---文件长度
  输出参数  : 无
- 返 回 值  : FSM_FILE_INFO_S
+ 返 回 值  : 
  调用函数  : 
  被调函数  : 
  
  修改历史      :
-  1.日    期   : 2018年11月9日
+  1.日    期   : 2018年11月13日
+    作    者   : 蒋康
+    修改内容   : 新生成函数
+
+备注： 考虑大文件，还是以块的形式来进行拷贝,通过数组快速索引
+
+*****************************************************************************/
+LONG FSM_MgrFileSpliceCreate(FSM_FILE_INFO_S *pstFileInfo)
+{
+    UINT32 uiIndex      = 0;
+    UINT32 uiOffSet     = 0;
+    UINT32 uiFileSize   = 0;
+    LONG   lFileSpliceNums = 0;
+    COM_IOBUF_S *pstIoBuf = NULL;
+    
+    /*不存在修改文件的情况，直接就是读取文件，所以不再添加互斥锁*/
+    if ( NULL == pstFileInfo
+        || NULL == pstFileInfo->pucFileContent 
+        || pstFileInfo->stFileInfo.stFileResInfo.uiFileSize >= FSM_MAX_FILESIZE )
+    {
+        return VOS_ERR;
+    }
+
+    uiFileSize = pstFileInfo->stFileInfo.stFileResInfo.uiFileSize;
+
+    lFileSpliceNums = uiFileSize / FSM_MAX_SPLICESIZE + 1;
+
+    /*创建文件片*/
+    for( uiIndex = 0; uiIndex < lFileSpliceNums; uiIndex++)
+    {
+        pstIoBuf = COM_Iobuf_Malloc(0);
+        if ( NULL == pstIoBuf )
+        {
+            VOS_Printf("Common iobuf malloc error!");
+            return VOS_ERR;
+        }
+
+        /*是否超过切片大小，并保存真实的长度*/
+        if ( uiFileSize - uiOffSet > FSM_MAX_SPLICESIZE )
+        {
+            COM_IOBUF_SETINPUTED_LEN(pstIoBuf, FSM_MAX_SPLICESIZE);
+        }
+        else
+        {
+            COM_IOBUF_SETINPUTED_LEN(pstIoBuf, uiFileSize - uiOffSet);
+        }
+        
+        uiOffSet += pstIoBuf->ulDataLen;
+        
+        VOS_Mem_Copy_S(pstIoBuf->pcData, pstIoBuf->ulMaxLen, (CHAR *)(pstFileInfo->pucFileContent + uiOffSet), pstIoBuf->ulDataLen);
+        
+        pstFileInfo->pstarryFileIoBuf[uiIndex] = pstIoBuf;
+        pstFileInfo->uiIoBufNums++;
+        if ( uiOffSet == uiFileSize )
+        {
+            break;
+        }
+    }
+
+    return lFileSpliceNums;
+}
+
+
+/*****************************************************************************
+ 函 数 名  : FSM_MgrFileSpliceRelease
+ 输入参数  : FSM_FILE_INFO_S *pstFileInfo  
+ 输出参数  : 无
+ 返 回 值  : 
+ 调用函数  : 
+ 被调函数  : 
+ 
+ 修改历史      :
+  1.日    期   : 2018年11月13日
     作    者   : 蒋康
     修改内容   : 新生成函数
 
 *****************************************************************************/
-FSM_FILE_INFO_S *FSM_MgrFileInfoCreate(CHAR *pcFileDir, const CHAR *pcFileName)
+VOID FSM_MgrFileSpliceRelease(FSM_FILE_INFO_S *pstFileInfo)
+{   
+    UINT32          uiIndex = 0;
+    
+    if ( NULL == pstFileInfo )
+    {
+        return;
+    }
+    
+    for(uiIndex=0; uiIndex < FSM_MAX_FILENUMS; uiIndex++)
+    {
+        if ( NULL != pstFileInfo->pstarryFileIoBuf[uiIndex] )
+        {
+            COM_Iobuf_Free(pstFileInfo->pstarryFileIoBuf[uiIndex]);
+            pstFileInfo->pstarryFileIoBuf[uiIndex] = NULL;
+        }
+        else
+        {
+            /*按顺序存放，直接可以跳出*/
+            break;
+        }
+    }
+    return;
+}
+
+/*****************************************************************************
+ 函 数 名: FSM_MgrFileInfoCreate
+ 功能描述  : 创建信息
+ 输入参数  : CHAR *pcFileDir  
+           CHAR *pcFile     
+ 输出参数  : 无
+ 返 回 值: FSM_FILE_INFO_S
+ 调用函数  : 
+ 被调函数  : 
+ 
+ 修改历史      :
+  1.日    期: 2018年11月9日
+    作    者: 蒋康
+    修改内容   : 新生成函数
+
+*****************************************************************************/
+FSM_FILE_INFO_S *FSM_MgrFileInfoCreate(CHAR *pcFileDir, UINT32 uiFileType)
 {
-    FSM_FILE_INFO_S*    pstFileInfo     = NULL;
-    UCHAR*              pucFileContent  = NULL;
-    UINT32              uiFileSize      = 0; 
+    FSM_FILE_INFO_S*    pstFileInfo         = NULL;
+    UINT32              uiFileSize          = 0; 
     MD5_CTX             stMd5Ctx            = {0};
     UCHAR               aucDigest[MD5_SIZE] = {0};
+    CHAR                acFileName[VOS_DIRSNAME_LEN]={0};
     
     pstFileInfo = (PFSM_FILE_INFO_S)malloc(sizeof(FSM_FILE_INFO_S));
     if ( NULL ==  pstFileInfo )
@@ -57,21 +170,28 @@ FSM_FILE_INFO_S *FSM_MgrFileInfoCreate(CHAR *pcFileDir, const CHAR *pcFileName)
     VOS_Mem_Zero(pstFileInfo, sizeof(FSM_FILE_INFO_S));
 
     VOS_RWLOCK_INIT(pstFileInfo->stLock);
-    VOS_DLIST_INIT(&pstFileInfo->stFileList);
 
     VOS_StrCat(pstFileInfo->stFileInfo.acFullName, pcFileDir);
-    VOS_StrCat(pstFileInfo->stFileInfo.acFullName, pcFileName);
+    
+    if( VOS_ERR == FSM_Conf_GetFileName(acFileName ,VOS_DIRSNAME_LEN, uiFileType))
+    {
+        free(pstFileInfo);
+        return NULL;
+    }
+    
+    VOS_StrCat(pstFileInfo->stFileInfo.acFullName, acFileName);
+    pstFileInfo->uiFileType = uiFileType;
 
     /*版本信息*/
     pstFileInfo->stFileInfo.stFileResInfo.uiFileVersion     = FSM_APP_VERSION;
     pstFileInfo->stFileInfo.stFileResInfo.uiFileSize        = 0;
     pstFileInfo->stFileInfo.stFileResInfo.uiFileCRCAlgm     = 0;
-    VOS_Mem_Zero(pstFileInfo->stFileInfo.stFileResInfo.acFileCRCVal,FSM_VAL_LEN);
+    VOS_Mem_Zero(pstFileInfo->stFileInfo.stFileResInfo.acFileCRCVal, FSM_VAL_LEN);
 
     /*直接文件大小和内容获取*/
-    if(VOS_ERR == VOS_FileRead(pstFileInfo->stFileInfo.acFullName, 
+    if ( VOS_ERR == VOS_FileRead(pstFileInfo->stFileInfo.acFullName, 
                                 (INT32 *)&uiFileSize,
-                                &pucFileContent))
+                                &pstFileInfo->pucFileContent) )
     {
         VOS_Printf("Get file size error, file=%s", pstFileInfo->stFileInfo.acFullName);
         free(pstFileInfo);
@@ -79,11 +199,17 @@ FSM_FILE_INFO_S *FSM_MgrFileInfoCreate(CHAR *pcFileDir, const CHAR *pcFileName)
     }
     
     MD5Init(&stMd5Ctx);
-    MD5Update(&stMd5Ctx, pucFileContent, uiFileSize);
+    MD5Update(&stMd5Ctx, pstFileInfo->pucFileContent, uiFileSize);
     MD5Final(aucDigest,&stMd5Ctx);
 
-    free(pucFileContent);
     pstFileInfo->stFileInfo.stFileResInfo.uiFileSize = uiFileSize;
+    
+    if ( VOS_ERR == FSM_MgrFileSpliceCreate(pstFileInfo) )
+    {
+        free(pstFileInfo->pucFileContent);
+        free(pstFileInfo);
+        return NULL;
+    }
 
     MD5_ValToString_s(aucDigest, FSM_VAL_LEN, (UCHAR *)pstFileInfo->stFileInfo.stFileResInfo.acFileCRCVal);
     
@@ -110,9 +236,44 @@ VOID    FSM_MgrFileInfoRelease(PFSM_FILE_INFO_S pstFileInfo)
 {
     if ( NULL != pstFileInfo )
     {
-        
+        if ( NULL == pstFileInfo->pucFileContent )
+        {
+            FSM_MgrFileSpliceRelease(pstFileInfo);
+            free(pstFileInfo->pucFileContent);
+            pstFileInfo->pucFileContent = NULL;
+        }
         free(pstFileInfo);
     }
+}
+
+
+/*****************************************************************************
+ 函 数 名  : FSM_MgrFileGetInfoByIndex
+ 功能描述  : 直接获取配置，注意不能更改
+ 输入参数  : UINT32 uiIndex  
+ 输出参数  : 无
+ 返 回 值  : 
+ 调用函数  : 
+ 被调函数  : 
+ 
+ 修改历史      :
+  1.日    期   : 2018年11月14日
+    作    者   : 蒋康
+    修改内容   : 新生成函数
+
+*****************************************************************************/
+PFSM_FILE_INFO_S FSM_MgrFileGetInfoByIndex(UINT32 uiIndex)
+{
+    PFSM_FILE_INFO_S pstFileInfo = NULL;
+
+    if ( NULL == g_pstFsmMgrCtx )
+    {
+        return NULL;
+    }
+
+    pstFileInfo = (PFSM_FILE_INFO_S)g_pstFsmMgrCtx->pstarryFileInfo[uiIndex];
+    
+    return pstFileInfo;
 }
 
 
@@ -131,7 +292,7 @@ VOID    FSM_MgrFileInfoRelease(PFSM_FILE_INFO_S pstFileInfo)
     修改内容   : 新生成函数
 
 *****************************************************************************/
-INT32   FSM_MgrEnvInit()
+LONG   FSM_MgrEnvInit()
 {
     UINT32  uiCount = 0;
     
@@ -173,7 +334,7 @@ INT32   FSM_MgrEnvInit()
         
     for (uiCount =0; uiCount<g_pstFsmMgrCtx->uiCurNums; uiCount++)
     {
-        g_pstFsmMgrCtx->pstarryFileInfo[uiCount]  = FSM_MgrFileInfoCreate(g_pstFsmMgrCtx->acCurDir, FSM_Conf_GetFileNameByIndex(uiCount));
+        g_pstFsmMgrCtx->pstarryFileInfo[uiCount]  = FSM_MgrFileInfoCreate(g_pstFsmMgrCtx->acCurDir, uiCount);
         if ( NULL == g_pstFsmMgrCtx->pstarryFileInfo[uiCount] )
         {
             VOS_Printf("Fsm create new file info failed!\n");

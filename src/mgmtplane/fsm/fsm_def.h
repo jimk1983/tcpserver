@@ -28,10 +28,10 @@
 /*资源文件信息*/
 typedef struct tagFsmFileResourceInfo
 {
-    UINT32 uiFileVersion;               /*文件版本信息*/
-    UINT32 uiFileSize;                  /*文件大小*/
-    UINT32 uiFileCRCAlgm;               /*文件校验算法类型*/
-    CHAR   acFileCRCVal[FSM_VAL_LEN];   /*文件校验值*/
+    UINT32 uiFileVersion;                   /*文件版本信息*/
+    UINT32 uiFileSize;                      /*文件大小*/
+    UINT32 uiFileCRCAlgm;                   /*文件校验算法类型*/
+    CHAR   acFileCRCVal[FSM_VAL_LEN];       /*文件校验值*/
 }FSM_RFILEINFO_S, *PFSM_RFILEINFO_S;
 
 

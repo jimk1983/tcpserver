@@ -136,15 +136,17 @@ typedef struct tagSwmBizMatch
 *		但是这个头部在使用数据传输，或者是UDPS的情况下，可以对EMPTO_HEADINFO_S成员进行单字节加密等
 */
 
-/*网络扩展控制报文: 一般采用TLV方式*/
 typedef struct tagSwmBizHead
 {
-    UINT32      uiVersion;              //版本号
-    UINT32      uiHeadSize;             //头部大小
-	UINT32      uiMark1;                /*业务识别特征码A*/
-	UINT32      uiMark2;                /*业务识别特征码B*/
-    UINT32      uiDataLen;              /*后续的数据长度*/
+    UINT32      uiVersion;              /*协议版本号*/
+    UINT32      uiHeadSize;             /*扩展头部大小*/
+    UINT32      uiMark1;                /*业务识别特征码A*/
+    UINT32      uiMark2;                /*业务识别特征码B*/
+    UINT32      uiCtrlType;             /*预留控制位*/
+    UINT32      uiOrigLen;              /*数据原长度*/
+    UINT32      uiDataLen;              /*数据长度*/
 }SWM_BIZ_HEAD_S, *PSWM_BIZ_HEAD_S;
+
 
 
 /*通用的协议格式*/

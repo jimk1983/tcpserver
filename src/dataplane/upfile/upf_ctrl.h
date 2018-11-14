@@ -18,5 +18,8 @@
 ******************************************************************************/
 
 
+/*保活的频率*/
+#define  UPF_KEEPALIVE_RATEVAL  300
+
 
 INT32 UPF_CtrlHandler(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIobuf);

@@ -18,14 +18,14 @@
 ******************************************************************************/
 
 
+#define UPF_PROTO_VERSION       0x0001        /*版本0.1*/   
+
 /*upf的业务识别码*/
 #define UPF_PROTO_MARK1         0xAA11BB22
 #define UPF_PROTO_MARK2         0xCC99DD88
         
 #define UPF_PROTO_TYPE_CTRL     0x0001        /*控制协议*/
 #define UPF_PROTO_TYPE_DATA     0x0002        /*数据协议*/
-
-#define UPF_PROTO_VERSION       0x0001        /*版本0.1*/    
-
+ 
 
 
