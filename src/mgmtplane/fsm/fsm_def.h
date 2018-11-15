@@ -28,6 +28,7 @@
 /*资源文件信息*/
 typedef struct tagFsmFileResourceInfo
 {
+    UINT32 uiFileType;                      /*文件类型*/
     UINT32 uiFileVersion;                   /*文件版本信息*/
     UINT32 uiFileSize;                      /*文件大小*/
     UINT32 uiFileCRCAlgm;                   /*文件校验算法类型*/
@@ -39,7 +40,7 @@ typedef struct tagFsmFileResourceInfo
 typedef struct tagFsmFileResourceEntry
 {
     CHAR acFullName[VOS_DIRSNAME_LEN];      /*文件存放路径*/
-    FSM_RFILEINFO_S    stFileResInfo;       /*文件信息*/
+    FSM_RFILEINFO_S  stFileResInfo;         /*文件信息*/
 }FSM_RENTRY_S, *PFSM_RENTRY_S;
 
 

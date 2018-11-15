@@ -87,7 +87,7 @@ LONG SWM_TLS_PipeConnDataDownProc(VOID *pvhandler, COM_IOBUF_S *pstIobuf)
         return VOS_ERR;
     }
 
-     VOS_Printf("swm pipe down entry ,send out!");
+    VOS_Printf("swm pipe down entry ,send out!");
 
     pstTlsConn = (SWM_TLS_CONN_S *)pvhandler;
 

@@ -136,7 +136,7 @@ VOID SWM_Biz_ChannelRelease(SWM_BIZ_CHANNEL_S *pstBizChannel)
 LONG SWM_Biz_ChannelMatch(SWM_BIZ_CHANNEL_S *pstBizChannel, CHAR *pcData, ULONG ulDataLen)
 {
     ULONG ulIndex     = 0;
-    ULONG ulBizType  = EMPTO_BIZTYPEID_UNKNOW;
+    ULONG ulBizType   = EMPTO_BIZTYPEID_UNKNOW;
     swm_biz_match_func pfcb = NULL;
 
     

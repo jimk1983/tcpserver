@@ -178,7 +178,7 @@ LONG UPF_Conn_PipeConnDataUpperProc(VOID *pvhandler, COM_IOBUF_S *pstIobuf)
     
     pstUpfConn = (UPF_CONN_S *)pvhandler;
         
-    if ( VOS_ERR == UPF_CtrlHandler(pstUpfConn, pstIobuf)  )
+    if ( VOS_ERR == UPF_Ctrl_Handler(pstUpfConn, pstIobuf)  )
     {
         VOS_Printf("pipe down iobuf error!");
         COM_Iobuf_Free(pstIobuf);
@@ -258,9 +258,19 @@ LONG UPF_Conn_PipeConnCtrlProc(VOID *pvhandler, ULONG ulCtrlCmd)
     switch(ulCtrlCmd)
     {
         case SWM_CTRLCMD_SNDOUT_COMPELETED:
-            
+        {
+            /*查看当前的发送情况，是否还需要继续发送*/
+            if ( pstConn->uiMgrChunkStatus == UPF_TRNSTATUS_SNDING )
+            {
+                if( VOS_ERR == UPF_Ctrl_PipeDownData(pstConn) )
+                {
+                    return VOS_ERR;
+                }
+            }
+        }
         break;
-    
+        default:
+            break;
     }
 
     return VOS_OK;

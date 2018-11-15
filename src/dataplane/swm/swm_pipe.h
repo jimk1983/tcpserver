@@ -20,10 +20,10 @@
 /*SWM 管道进行水位控制*/
 /*高水位, 发送队列超过高水位，意味着要关闭内网接收，
 并且打开外网不停的尝试发送*/
-#define SWM_PIPE_IOBUF_THLD_HIGH        25    
+#define SWM_PIPE_IOBUF_THLD_HIGH        5    
 
 /*低水位, 进入低水位时候，则打开内网接收即可*/
-#define SWM_PIPE_IOBUF_THLD_LOW         5         
+#define SWM_PIPE_IOBUF_THLD_LOW         3         
 
 
 /*SSL线程的管道节点的业务类型*/

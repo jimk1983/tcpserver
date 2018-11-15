@@ -24,6 +24,7 @@
 #include "upfile/upf_pub.h"
 
 
+
 /*数据流返回时候的组装报文*/
 VOID UPF_Ctrl_MakeCommBizHeadLen(COM_IOBUF_S *pstIobuf, UINT32 uiLocalSockfd, UINT32 uiStreamLen)
 {
@@ -57,13 +58,20 @@ VOID UPF_Ctrl_MakeCommBizHeadLen(COM_IOBUF_S *pstIobuf, UINT32 uiLocalSockfd, UI
     修改内容   : 新生成函数
     
 *****************************************************************************/
-LONG UFP_Ctrl_MakeHeadInfoDataResponse(COM_IOBUF_S *pstOutIobuf, PFSM_FILE_INFO_S          pstFileInfo)
+LONG UFP_Ctrl_MakePacketDataResponse(COM_IOBUF_S *pstOutIobuf, PFSM_RENTRY_S          pstEntryInfo, COM_IOBUF_S *pstChunkBuf)
 {
-    PUPF_FILEDATA_RESP_S pstHead = NULL;
+    PUPF_FILEDATA_RESP_S pstData = NULL;
     SWM_BIZ_HEAD_S*   pstBizHead = NULL;
     UPF_HEAD_S*       pstUpfHead = NULL;
     CHAR*             pcPacket   = NULL;
     UINT32            uiLoadLen  = 0;
+
+    if ( NULL == pstOutIobuf
+        || NULL == pstEntryInfo 
+        || NULL == pstChunkBuf )
+    {
+        return VOS_ERR;
+    }
     
     pcPacket   = COM_IOBUF_GETSAVED_DATA(pstOutIobuf);
     
@@ -79,22 +87,107 @@ LONG UFP_Ctrl_MakeHeadInfoDataResponse(COM_IOBUF_S *pstOutIobuf, PFSM_FILE_INFO_
     pstUpfHead->uiCtrlLength= VOS_htonl(sizeof(UPF_FILEDATA_RESP_S));
     COM_IOBUF_SETINPUTED_LEN(pstOutIobuf, sizeof(UPF_HEAD_S));
     
-    pstHead = (PUPF_FILEDATA_RESP_S)(pcPacket + SWM_BIZ_HEAD_LEN + sizeof(UPF_HEAD_S));
+    pstData = (PUPF_FILEDATA_RESP_S)(pcPacket + SWM_BIZ_HEAD_LEN + sizeof(UPF_HEAD_S));
     
-    pstHead->uiAPPVersion = VOS_htonl(pstFileInfo->stFileInfo.stFileResInfo.uiFileVersion);
-    pstHead->uiFileSize = VOS_htonl(pstFileInfo->stFileInfo.stFileResInfo.uiFileSize);
-    if ( VOS_ERR == FSM_Conf_GetFileName(pstHead->acFileName, UPF_FILELEN, pstFileInfo->uiFileType) )
+    pstData->uiAPPVersion = VOS_htonl(pstEntryInfo->stFileResInfo.uiFileVersion);
+    pstData->uiFileSize = VOS_htonl(pstEntryInfo->stFileResInfo.uiFileSize);
+    
+    if ( VOS_ERR == FSM_Conf_GetFileName(pstData->acFileName, UPF_FILELEN, pstEntryInfo->stFileResInfo.uiFileType) )
     {
         return VOS_ERR;
     }
-        
+    
+    VOS_Mem_Copy_S(pstData->acChunkContent, UPF_CONTENTLEN, pstChunkBuf->pcData, pstChunkBuf->ulDataLen);
     uiLoadLen = sizeof(UPF_HEAD_S) + sizeof(UPF_FILEDATA_RESP_S);
     pstBizHead->uiDataLen = VOS_htonl(uiLoadLen);
     COM_IOBUF_SETINPUTED_LEN(pstOutIobuf, sizeof(UPF_FILEDATA_RESP_S));
     
-    return VOS_ERR;
+    return VOS_OK;
 }
 
+
+/*****************************************************************************
+ 函 数 名  : UPF_Ctrl_PipeDownData
+ 功能描述  : 下发数据包
+ 输入参数  : UPF_CONN_S *pstUpfConn  
+ 输出参数  : 无
+ 返 回 值  : 
+ 调用函数  : 
+ 被调函数  : 
+ 
+ 修改历史      :
+  1.日    期   : 2018年11月15日
+    作    者   : 蒋康
+    修改内容   : 新生成函数
+
+*****************************************************************************/
+INT32 UPF_Ctrl_PipeDownData(UPF_CONN_S *pstUpfConn)
+{
+    PCOM_IOBUF_S    pstChunkIobuf   = NULL;
+    PCOM_IOBUF_S    pstOutIobuf     = NULL;
+    UINT32          uiChunkIndex    = 0;
+    UINT32          uiCount         = 0;
+    LONG            lRet            = 0;
+
+    if ( NULL == pstUpfConn )
+    {
+        return VOS_ERR;
+    }
+
+    for ( uiCount =0; uiCount < pstUpfConn->uiMgrChunkNums; uiCount++)
+    {
+        /*分片索引*/
+        uiChunkIndex = pstUpfConn->uiMgrChunkStartIndex + pstUpfConn->uiMgrChunkCount;
+        
+        /*获取内存*/
+        pstChunkIobuf = (COM_IOBUF_S *)FSM_Conf_GetChunkIobufByIndex(pstUpfConn->stFileEntryInfo.stFileResInfo.uiFileType, uiChunkIndex);
+        if ( NULL == pstChunkIobuf )
+        {
+            return VOS_ERR;
+        }
+
+        pstOutIobuf = COM_Iobuf_Malloc(0);
+        if ( NULL == pstOutIobuf )
+        {
+            return VOS_ERR;
+        }
+        
+        lRet = UFP_Ctrl_MakePacketDataResponse(pstOutIobuf, &pstUpfConn->stFileEntryInfo, pstChunkIobuf);
+        if ( VOS_ERR == lRet )
+        {
+            COM_Iobuf_Free(pstOutIobuf);
+            pstOutIobuf = NULL;
+            return VOS_ERR;
+        }                
+        
+        lRet = UPF_Conn_TransBufToDownPipeNode(pstUpfConn, pstOutIobuf);
+        if( VOS_ERR == lRet )
+        {
+            VOS_Printf("pipe down iobuf error!");
+            COM_Iobuf_Free(pstOutIobuf);
+            return VOS_ERR;
+        }
+        
+        /*发送的计数增加*/
+        pstUpfConn->uiMgrChunkCount++;
+        
+        /*水位控制*/
+        if ( VOS_SYS_EWOULDBLOCK == lRet)
+        {   
+            VOS_Printf("updata file transfer down EwouldBlocked!");
+            break;
+        }
+    }
+
+    /*是不是已经最后一片*/
+    if ( uiChunkIndex == pstUpfConn->uiMgrChunkNums )
+    {
+        /*发送结束了*/
+        pstUpfConn->uiMgrChunkStatus = UPF_TRNSTATUS_SNDEND;
+    }
+
+    return VOS_OK;
+}
 /*****************************************************************************
  函 数 名  : UPF_CtrlHandler
  功能描述  : 控制处理
@@ -111,11 +204,10 @@ LONG UFP_Ctrl_MakeHeadInfoDataResponse(COM_IOBUF_S *pstOutIobuf, PFSM_FILE_INFO_
     修改内容   : 新生成函数
 
 *****************************************************************************/
-INT32 UPF_CtrlHandler(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIobuf)
+INT32 UPF_Ctrl_Handler(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIobuf)
 { 
     SWM_BIZ_HEAD_S* pstBizHead      = NULL;
     PUPF_HEAD_S     pstUpfHead      = NULL; 
-    PCOM_IOBUF_S    pstChunkIobuf   = NULL;
     CHAR*           pcPacket        = NULL;
     UINT32          uiPackLen       =0 ;
     LONG            lRet        = 0;
@@ -191,9 +283,6 @@ INT32 UPF_CtrlHandler(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIobuf)
         {
             PUPF_FILEDATA_REQ_S     pstFileReq      = NULL;
             PFSM_FILE_INFO_S        pstFileInfo     = NULL;
-            PCOM_IOBUF_S            pstOutIobuf     = NULL;
-            UINT32                  uiChunkIndex    = 0;
-            UINT32                  uiCount         = 0;
             
             pstFileReq = (PUPF_FILEDATA_REQ_S)(pcPacket + SWM_BIZ_HEAD_LEN + sizeof(UPF_HEAD_S));
 
@@ -203,61 +292,46 @@ INT32 UPF_CtrlHandler(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIobuf)
                 return VOS_ERR;
             }
 
-            pstUpfConn->uiMgrChunkStartIndex        =  VOS_htonl(pstFileReq->uiChunkStart);
-            pstUpfConn->uiMgrChunkNums              =  pstFileInfo->uiIoBufNums;
+            pstUpfConn->uiMgrChunkStartIndex    = VOS_htonl(pstFileReq->uiChunkStart);
+            pstUpfConn->uiMgrChunkNums          = pstFileInfo->uiIoBufNums;
+            pstUpfConn->uiMgrChunkCount         = 0;
+            pstUpfConn->uiMgrChunkStatus        = UPF_TRNSTATUS_SNDING;
             
             VOS_Mem_Copy_S(&pstUpfConn->stFileEntryInfo, sizeof(FSM_RENTRY_S), &pstFileInfo->stFileInfo, sizeof(FSM_RENTRY_S));
 
-            for ( uiCount =0; uiCount < pstFileInfo->uiIoBufNums; uiCount++)
+            if ( VOS_ERR == UPF_Ctrl_PipeDownData(pstUpfConn) )
             {
-                /*分片索引*/
-                uiChunkIndex = pstUpfConn->uiMgrChunkStartIndex + pstUpfConn->uiMgrChunkCount;
-                
-                /*获取内存*/
-                pstChunkIobuf = (COM_IOBUF_S *)FSM_Conf_GetChunkIobufByIndex(FSM_CONF_FILE_XML, uiChunkIndex);
-                if ( NULL == pstChunkIobuf )
-                {
-                    return VOS_ERR;
-                }
-
-                pstOutIobuf = COM_Iobuf_Malloc(0);
-                if ( NULL == pstOutIobuf )
-                {
-                    return VOS_ERR;
-                }
-                
-                lRet = UFP_Ctrl_MakeHeadInfoDataResponse(pstOutIobuf, pstFileInfo);
-                if ( VOS_ERR == lRet )
-                {
-                    COM_Iobuf_Free(pstOutIobuf);
-                    pstOutIobuf = NULL;
-                    return VOS_ERR;
-                }                
-                
-                lRet = UPF_Conn_TransBufToDownPipeNode(pstUpfConn, pstOutIobuf);
-                if( VOS_ERR == lRet )
-                {
-                    VOS_Printf("pipe down iobuf error!");
-                    COM_Iobuf_Free(pstOutIobuf);
-                    return VOS_ERR;
-                }
-                
-                /*发送的计数增加*/
-                pstUpfConn->uiMgrChunkCount++;
-                /*打开发送通知，通过控制进行异步发送*/
-                pstUpfConn->uiMgrChunkStatus = UPF_TRNSTATUS_SNDING;
-                
-                if ( VOS_SYS_EWOULDBLOCK == lRet)
-                {   
-                    VOS_Printf("updata file transfer down EwouldBlocked!");
-                    break;
-                }
+                 return VOS_ERR;
             }
         }    
         break;
         
         case UPSER_CTLCODE_APPFILE_GET:
-            break;
+        {
+            PUPF_FILEDATA_REQ_S     pstFileReq      = NULL;
+            PFSM_FILE_INFO_S        pstFileInfo     = NULL;
+            
+            pstFileReq = (PUPF_FILEDATA_REQ_S)(pcPacket + SWM_BIZ_HEAD_LEN + sizeof(UPF_HEAD_S));
+
+            pstFileInfo = FSM_Conf_GetFileInfo(FSM_CONF_FILE_APP);
+            if ( NULL == pstFileInfo )
+            {
+                return VOS_ERR;
+            }
+
+            pstUpfConn->uiMgrChunkStartIndex    = VOS_htonl(pstFileReq->uiChunkStart);
+            pstUpfConn->uiMgrChunkNums          = pstFileInfo->uiIoBufNums;
+            pstUpfConn->uiMgrChunkCount         = 0;
+            pstUpfConn->uiMgrChunkStatus        = UPF_TRNSTATUS_SNDING;
+            
+            VOS_Mem_Copy_S(&pstUpfConn->stFileEntryInfo, sizeof(FSM_RENTRY_S), &pstFileInfo->stFileInfo, sizeof(FSM_RENTRY_S));
+
+            if ( VOS_ERR == UPF_Ctrl_PipeDownData(pstUpfConn) )
+            {
+                return VOS_ERR;
+            }
+        }
+        break;
         default:
             break;
     }

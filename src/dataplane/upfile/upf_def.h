@@ -36,7 +36,7 @@ typedef  enum
 
 /*设备标签长度*/
 #define UPF_DEVLAB_LEN      64
-#define UPF_FILELEN         16
+#define UPF_FILELEN         32
 #define UPF_FILEVALEN       36
 
 /*保活信息*/

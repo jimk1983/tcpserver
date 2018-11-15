@@ -46,6 +46,7 @@ LONG FSM_MgrFileSpliceCreate(FSM_FILE_INFO_S *pstFileInfo)
 {
     UINT32 uiIndex      = 0;
     UINT32 uiOffSet     = 0;
+    UINT32 uiLeftSize   = 0;
     UINT32 uiFileSize   = 0;
     LONG   lFileSpliceNums = 0;
     COM_IOBUF_S *pstIoBuf = NULL;
@@ -71,20 +72,22 @@ LONG FSM_MgrFileSpliceCreate(FSM_FILE_INFO_S *pstFileInfo)
             VOS_Printf("Common iobuf malloc error!");
             return VOS_ERR;
         }
-
+        
+        uiLeftSize = uiFileSize - uiOffSet;
+        
         /*是否超过切片大小，并保存真实的长度*/
-        if ( uiFileSize - uiOffSet > FSM_MAX_SPLICESIZE )
+        if ( uiLeftSize > FSM_MAX_SPLICESIZE )
         {
             COM_IOBUF_SETINPUTED_LEN(pstIoBuf, FSM_MAX_SPLICESIZE);
+            VOS_Mem_Copy_S(pstIoBuf->pcData, pstIoBuf->ulMaxLen, (CHAR *)(pstFileInfo->pucFileContent + uiOffSet), FSM_MAX_SPLICESIZE);
         }
         else
         {
-            COM_IOBUF_SETINPUTED_LEN(pstIoBuf, uiFileSize - uiOffSet);
+            COM_IOBUF_SETINPUTED_LEN(pstIoBuf, uiLeftSize);
+            VOS_Mem_Copy_S(pstIoBuf->pcData, pstIoBuf->ulMaxLen, (CHAR *)(pstFileInfo->pucFileContent + uiOffSet), uiLeftSize);
         }
         
         uiOffSet += pstIoBuf->ulDataLen;
-        
-        VOS_Mem_Copy_S(pstIoBuf->pcData, pstIoBuf->ulMaxLen, (CHAR *)(pstFileInfo->pucFileContent + uiOffSet), pstIoBuf->ulDataLen);
         
         pstFileInfo->pstarryFileIoBuf[uiIndex] = pstIoBuf;
         pstFileInfo->uiIoBufNums++;
@@ -180,7 +183,6 @@ FSM_FILE_INFO_S *FSM_MgrFileInfoCreate(CHAR *pcFileDir, UINT32 uiFileType)
     }
     
     VOS_StrCat(pstFileInfo->stFileInfo.acFullName, acFileName);
-    pstFileInfo->uiFileType = uiFileType;
 
     /*版本信息*/
     pstFileInfo->stFileInfo.stFileResInfo.uiFileVersion     = FSM_APP_VERSION;
@@ -203,6 +205,7 @@ FSM_FILE_INFO_S *FSM_MgrFileInfoCreate(CHAR *pcFileDir, UINT32 uiFileType)
     MD5Final(aucDigest,&stMd5Ctx);
 
     pstFileInfo->stFileInfo.stFileResInfo.uiFileSize = uiFileSize;
+    pstFileInfo->stFileInfo.stFileResInfo.uiFileType = uiFileType;
     
     if ( VOS_ERR == FSM_MgrFileSpliceCreate(pstFileInfo) )
     {
