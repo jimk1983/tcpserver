@@ -58,7 +58,7 @@ VOID UPF_Ctrl_MakeCommBizHeadLen(COM_IOBUF_S *pstIobuf, UINT32 uiLocalSockfd, UI
     修改内容   : 新生成函数
     
 *****************************************************************************/
-LONG UFP_Ctrl_MakePacketDataResponse(COM_IOBUF_S *pstOutIobuf, PFSM_RENTRY_S          pstEntryInfo, COM_IOBUF_S *pstChunkBuf)
+LONG UFP_Ctrl_MakePacketDataResponse(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstOutIobuf, COM_IOBUF_S *pstChunkBuf, UCHAR *pcChunkCrcValue, UINT32 uiChunkIndex)
 {
     PUPF_FILEDATA_RESP_S pstData = NULL;
     SWM_BIZ_HEAD_S*   pstBizHead = NULL;
@@ -67,32 +67,37 @@ LONG UFP_Ctrl_MakePacketDataResponse(COM_IOBUF_S *pstOutIobuf, PFSM_RENTRY_S    
     UINT32            uiLoadLen  = 0;
 
     if ( NULL == pstOutIobuf
-        || NULL == pstEntryInfo 
+        || NULL == pstUpfConn 
         || NULL == pstChunkBuf )
     {
         return VOS_ERR;
     }
     
     pcPacket   = COM_IOBUF_GETSAVED_DATA(pstOutIobuf);
-    
-    pstBizHead = (SWM_BIZ_HEAD_S  *)pcPacket;
 
+    /*业务头封装*/
+    pstBizHead = (SWM_BIZ_HEAD_S  *)pcPacket;
     pstBizHead->uiVersion   = VOS_htonl(EMSDK_VERSION);
     pstBizHead->uiMark1     = VOS_htonl(UPF_PROTO_MARK1);
     pstBizHead->uiMark2     = VOS_htonl(UPF_PROTO_MARK2);    
     COM_IOBUF_SETINPUTED_LEN(pstOutIobuf, SWM_BIZ_HEAD_LEN);
-    
+
+    /*业务头封装*/
     pstUpfHead = (PUPF_HEAD_S)(pcPacket + SWM_BIZ_HEAD_LEN);
-    pstUpfHead->uiCtrlCode  = VOS_htonl(UPSER_CTLCODE_XMLFILE);
+    pstUpfHead->uiCtrlCode  = VOS_htonl(pstUpfConn->uiUpfCtrlCode);
     pstUpfHead->uiCtrlLength= VOS_htonl(sizeof(UPF_FILEDATA_RESP_S));
     COM_IOBUF_SETINPUTED_LEN(pstOutIobuf, sizeof(UPF_HEAD_S));
-    
+
+    /*数据包封装*/    
     pstData = (PUPF_FILEDATA_RESP_S)(pcPacket + SWM_BIZ_HEAD_LEN + sizeof(UPF_HEAD_S));
+    pstData->uiAPPVersion = VOS_htonl(pstUpfConn->stFileEntryInfo.stFileResInfo.uiFileVersion);
+    pstData->uiFileSize   = VOS_htonl(pstUpfConn->stFileEntryInfo.stFileResInfo.uiFileSize);
+    pstData->uiChunkNums  = VOS_htonl(pstUpfConn->uiMgrChunkNums);
+    pstData->uiChunkIndex = VOS_htonl(uiChunkIndex);
+    pstData->uiChunkSize  = VOS_htonl(pstChunkBuf->ulDataLen);
+    VOS_Mem_Copy_S(pstData->acChunkValue, UPF_FILEVALEN, pcChunkCrcValue, UPF_FILEVALEN);
     
-    pstData->uiAPPVersion = VOS_htonl(pstEntryInfo->stFileResInfo.uiFileVersion);
-    pstData->uiFileSize = VOS_htonl(pstEntryInfo->stFileResInfo.uiFileSize);
-    
-    if ( VOS_ERR == FSM_Conf_GetFileName(pstData->acFileName, UPF_FILELEN, pstEntryInfo->stFileResInfo.uiFileType) )
+    if ( VOS_ERR == FSM_Conf_GetFileName(pstData->acFileName, UPF_FILELEN, pstUpfConn->stFileEntryInfo.stFileResInfo.uiFileType) )
     {
         return VOS_ERR;
     }
@@ -123,11 +128,11 @@ LONG UFP_Ctrl_MakePacketDataResponse(COM_IOBUF_S *pstOutIobuf, PFSM_RENTRY_S    
 *****************************************************************************/
 INT32 UPF_Ctrl_PipeDownData(UPF_CONN_S *pstUpfConn)
 {
-    PCOM_IOBUF_S    pstChunkIobuf   = NULL;
-    PCOM_IOBUF_S    pstOutIobuf     = NULL;
-    UINT32          uiChunkIndex    = 0;
-    UINT32          uiCount         = 0;
-    LONG            lRet            = 0;
+    PFSM_CHUNK_IOBUF_S  pstChunkInfo    = NULL;
+    PCOM_IOBUF_S        pstOutIobuf     = NULL;
+    UINT32              uiChunkIndex    = 0;
+    UINT32              uiCount         = 0;
+    LONG                lRet            = 0;
 
     if ( NULL == pstUpfConn )
     {
@@ -140,8 +145,8 @@ INT32 UPF_Ctrl_PipeDownData(UPF_CONN_S *pstUpfConn)
         uiChunkIndex = pstUpfConn->uiMgrChunkStartIndex + pstUpfConn->uiMgrChunkCount;
         
         /*获取内存*/
-        pstChunkIobuf = (COM_IOBUF_S *)FSM_Conf_GetChunkIobufByIndex(pstUpfConn->stFileEntryInfo.stFileResInfo.uiFileType, uiChunkIndex);
-        if ( NULL == pstChunkIobuf )
+        pstChunkInfo = (PFSM_CHUNK_IOBUF_S)FSM_Conf_GetChunkIobufByIndex(pstUpfConn->stFileEntryInfo.stFileResInfo.uiFileType, uiChunkIndex);
+        if ( NULL == pstChunkInfo )
         {
             return VOS_ERR;
         }
@@ -152,7 +157,7 @@ INT32 UPF_Ctrl_PipeDownData(UPF_CONN_S *pstUpfConn)
             return VOS_ERR;
         }
         
-        lRet = UFP_Ctrl_MakePacketDataResponse(pstOutIobuf, &pstUpfConn->stFileEntryInfo, pstChunkIobuf);
+        lRet = UFP_Ctrl_MakePacketDataResponse(pstUpfConn,pstOutIobuf, pstChunkInfo->pstIoBuf,pstChunkInfo->acChunkCRCVal, uiChunkIndex);
         if ( VOS_ERR == lRet )
         {
             COM_Iobuf_Free(pstOutIobuf);
@@ -296,9 +301,9 @@ INT32 UPF_Ctrl_Handler(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIobuf)
             pstUpfConn->uiMgrChunkNums          = pstFileInfo->uiIoBufNums;
             pstUpfConn->uiMgrChunkCount         = 0;
             pstUpfConn->uiMgrChunkStatus        = UPF_TRNSTATUS_SNDING;
-            
+            pstUpfConn->uiUpfCtrlCode           = UPSER_CTLCODE_XMLFILE;
             VOS_Mem_Copy_S(&pstUpfConn->stFileEntryInfo, sizeof(FSM_RENTRY_S), &pstFileInfo->stFileInfo, sizeof(FSM_RENTRY_S));
-
+            
             if ( VOS_ERR == UPF_Ctrl_PipeDownData(pstUpfConn) )
             {
                  return VOS_ERR;
@@ -323,6 +328,7 @@ INT32 UPF_Ctrl_Handler(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIobuf)
             pstUpfConn->uiMgrChunkNums          = pstFileInfo->uiIoBufNums;
             pstUpfConn->uiMgrChunkCount         = 0;
             pstUpfConn->uiMgrChunkStatus        = UPF_TRNSTATUS_SNDING;
+            pstUpfConn->uiUpfCtrlCode           = UPSER_CTLCODE_APPFILE;
             
             VOS_Mem_Copy_S(&pstUpfConn->stFileEntryInfo, sizeof(FSM_RENTRY_S), &pstFileInfo->stFileInfo, sizeof(FSM_RENTRY_S));
 

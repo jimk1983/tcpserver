@@ -36,12 +36,12 @@
 /*单个文件信息*/
 typedef struct tagFsmFileEntryInfo
 {
-    VOS_RW_LOCK_S    stLock;            /*文件片锁*/
+    VOS_RW_LOCK_S       stLock;            /*文件片锁*/
     //VOS_DLIST_NODE_S stFileList;      /*文件链*/   
-    COM_IOBUF_S      *pstarryFileIoBuf[FSM_MAX_FILENUMS];  /*文件内容索引*/
-    UINT32           uiIoBufNums;       /*文件片数量*/
-    UCHAR            *pucFileContent;   /*文件内存*/
-    FSM_RENTRY_S     stFileInfo;        /*文件信息*/
+    UINT32              uiIoBufNums;       /*文件片数量*/
+    FSM_CHUNK_IOBUF_S   starryChunkIoBuf[FSM_MAX_FILENUMS];  /*文件内容索引*/
+    UCHAR            *  pucFileContent;   /*文件内存*/
+    FSM_RENTRY_S        stFileInfo;        /*文件信息*/
 }FSM_FILE_INFO_S, *PFSM_FILE_INFO_S;
 
 /*所有文件信息*/

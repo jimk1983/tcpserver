@@ -75,6 +75,8 @@ VOID SWM_TLS_ConnDelNotify(SWM_TLS_CONN_S *pstTlsConn)
         VOS_Printf("param error");
         return;
     }
+
+    VOS_Printf("SWM_TLS_ConnDelNotify Entry, fd=%d, pstConn=%p", pstTlsConn->lConnfd, pstTlsConn);
     
     /*需要第一时间先删除该注册网络事件,
     关闭内核产生的大量错误的网络事件
@@ -223,7 +225,7 @@ VOID SWM_TLS_ConnRecvCb(VOID *pvTlsConn)
         }
         else 
         {
-            VOS_Printf("UTL_SSL_Read error!");
+            VOS_Printf("UTL_SSL_Read error!,fd=%d", pstTlsConn->lConnfd);
             SWM_TLS_ConnDelNotify(pstTlsConn);
             return;
         }
@@ -361,6 +363,9 @@ VOID SWM_TLS_ConnSendCb(VOID *pvTlsConn)
     }
     
     pstTlsConn = (SWM_TLS_CONN_S *)pvTlsConn;
+
+    VOS_Printf("SWM_TLS_ConnSendCb Entry, pstConn=%p, fd=%d", pstTlsConn, pstTlsConn->lConnfd);
+    
     
     /*先看看队列是不是空的,如果是空的，则关闭发送*/
     if ( VOS_TRUE == COM_Iobuf_QueIsEmpty(pstTlsConn->pstBizChannel->pstSwmSendQueue))
@@ -373,7 +378,7 @@ VOID SWM_TLS_ConnSendCb(VOID *pvTlsConn)
         
         return;
     }
-
+    
     /*上一次还没有发完，需要继续发送*/
     if ( NULL != pstTlsConn->pstSendIobuf )
     {
@@ -427,7 +432,8 @@ SendAgain:
         else 
         {
             /*TODO:出现这个，表示阻塞了，尝试多次，如果一直发送不成功，则断开该链接*/
-            if ( VOS_SOCK_SSL_EWOULDBLOCK == lErrorStatus )
+            //if ( VOS_SOCK_SSL_EWOULDBLOCK == lErrorStatus )
+            if ( VOS_SOCK_EWOULDBLOCK == lErrorStatus )
             {
                 VOS_Printf("UTL_SSL_Write EWOULDBLOCK!");
                 if ( pstTlsConn->pstBizChannel->ulSndBlockCount >= SWM_SNDBLOCK_MAXNUMS )
@@ -448,7 +454,6 @@ SendAgain:
     }
     
     #if 0
-    
     /*SSL 握手相关, 还没有握手完成状态*/
     if (  (SWM_TLS_SSL_STATUS_INIT == pstTlsConn->lHandShakeStatus ) 
         || (SWM_TLS_SSL_STATUS_ACCEPTING == pstTlsConn->lHandShakeStatus ) )

@@ -25,6 +25,13 @@
 #define FSM_CRCALGM_SHA1    1
 
 
+typedef struct tagFsmChunkIobuf
+{
+    UCHAR           acChunkCRCVal[FSM_VAL_LEN];     /*文件校验值*/
+    COM_IOBUF_S*    pstIoBuf;                       /*文件内容*/
+}FSM_CHUNK_IOBUF_S, *PFSM_CHUNK_IOBUF_S;
+
+
 /*资源文件信息*/
 typedef struct tagFsmFileResourceInfo
 {

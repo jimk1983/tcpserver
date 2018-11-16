@@ -56,7 +56,7 @@ const PFSM_FILE_INFO_S FSM_Conf_GetFileInfo(FSM_CONF_FILE_E eFileType);
 
 const CHAR   *FSM_Conf_GetFileNameByIndex(UINT32 iIndex);
 
-const COM_IOBUF_S *FSM_Conf_GetChunkIobufByIndex(FSM_CONF_FILE_E eFileType, UINT32 uiChunkIndex);
+const FSM_CHUNK_IOBUF_S *FSM_Conf_GetChunkIobufByIndex(FSM_CONF_FILE_E eFileType, UINT32 uiChunkIndex);
 
 
 

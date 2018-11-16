@@ -117,6 +117,8 @@ struct tagUPFConn
     /*当前要发送的文件信息*/
     FSM_RENTRY_S                stFileEntryInfo;    
     
+    /*当前传输的控制码*/
+    UINT32                      uiUpfCtrlCode;
     /*文件片发送状态*/
     UINT32                      uiMgrChunkStatus;
     /*文件片请求的起始索引*/

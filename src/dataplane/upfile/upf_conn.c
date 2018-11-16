@@ -252,8 +252,16 @@ LONG UPF_Conn_PipeConnCtrlProc(VOID *pvhandler, ULONG ulCtrlCmd)
     }
 
     pstConn = (UPF_CONN_S *)pvhandler;
-
+    
     VOS_Printf("UPF_Conn_PipeConnCtrlProc Entry! pstConn=%p", pstConn);
+
+    /*如果已经进入老化，就不要再继续处理了*/
+    if( VOS_TRUE == pstConn->stExpireOps.ulExpireConfirm )
+    {
+        /*这里不应该发送*/
+        VOS_Printf("system error!");
+        return;
+    }
 
     switch(ulCtrlCmd)
     {

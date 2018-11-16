@@ -26,7 +26,7 @@ const FSM_CONF_INFO_S g_starryFsmConfig[]=
 {
     {
         FSM_CONF_FILE_XML,
-        "/testSmall.xml"
+        "/UpgrateInfo.xml"
     },
     {
         FSM_CONF_FILE_APP,
@@ -207,12 +207,12 @@ const PFSM_FILE_INFO_S FSM_Conf_GetFileInfo(FSM_CONF_FILE_E eFileType)
 
 
 /*****************************************************************************
- 函 数 名  : FSM_Conf_GetChunkContentByIndex
+ 函 数 名: FSM_Conf_GetChunkContentByIndex
  功能描述  : 获取文件Chunk内容
  输入参数  :    FSM_CONF_FILE_E eFileType   ---文件类型
             UINT32 uiChunkIndex         ---块索引
  输出参数  : 无
- 返 回 值  : const
+ 返 回 值: const
  调用函数  : 
  被调函数  : 
  
@@ -222,9 +222,9 @@ const PFSM_FILE_INFO_S FSM_Conf_GetFileInfo(FSM_CONF_FILE_E eFileType)
     修改内容   : 新生成函数
 
 *****************************************************************************/
-const COM_IOBUF_S *FSM_Conf_GetChunkIobufByIndex(FSM_CONF_FILE_E eFileType, UINT32 uiChunkIndex)
+const FSM_CHUNK_IOBUF_S *FSM_Conf_GetChunkIobufByIndex(FSM_CONF_FILE_E eFileType, UINT32 uiChunkIndex)
 {
-    PCOM_IOBUF_S        pstIoBuf = NULL;
+    PFSM_CHUNK_IOBUF_S  pstChunkBuf = NULL;
     PFSM_FILE_INFO_S    pstFileInfo  = NULL;
 
     if ( uiChunkIndex >= FSM_MAX_FILENUMS )
@@ -238,9 +238,9 @@ const COM_IOBUF_S *FSM_Conf_GetChunkIobufByIndex(FSM_CONF_FILE_E eFileType, UINT
         return NULL;
     }
 
-    pstIoBuf = pstFileInfo->pstarryFileIoBuf[uiChunkIndex];
+    pstChunkBuf = &pstFileInfo->starryChunkIoBuf[uiChunkIndex];
     
-    return pstIoBuf;
+    return pstChunkBuf;
 }
 
 

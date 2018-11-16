@@ -118,7 +118,9 @@ void MD5_ValToString_s(UCHAR *pcMd5Val, UINT32 uiOutMaxLen, UCHAR *pcOutStr)
     
     for(uiIndex = 0; uiIndex < MD5_SIZE ; uiIndex++)
     {
-        lRet += VOS_Snprintf(pcOutStr+lRet, uiOutMaxLen, "%02x", pcMd5Val[uiIndex]);
+        //lRet += VOS_Snprintf(pcOutStr+lRet, uiOutMaxLen, "%02x", pcMd5Val[uiIndex]);
+        //itoa(pcMd5Val[uiIndex], pcOutStr+uiIndex, 10);
+        lRet +=sprintf((char* const)pcOutStr+lRet,"%02x", pcMd5Val[uiIndex]);
     }
 }
 

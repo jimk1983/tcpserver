@@ -49,7 +49,9 @@ LONG FSM_MgrFileSpliceCreate(FSM_FILE_INFO_S *pstFileInfo)
     UINT32 uiLeftSize   = 0;
     UINT32 uiFileSize   = 0;
     LONG   lFileSpliceNums = 0;
-    COM_IOBUF_S *pstIoBuf = NULL;
+    COM_IOBUF_S *pstIoBuf  = NULL;
+    MD5_CTX      stMd5Ctx  = {0};
+    UCHAR        aucDigest[MD5_SIZE] = {0};
     
     /*不存在修改文件的情况，直接就是读取文件，所以不再添加互斥锁*/
     if ( NULL == pstFileInfo
@@ -89,7 +91,12 @@ LONG FSM_MgrFileSpliceCreate(FSM_FILE_INFO_S *pstFileInfo)
         
         uiOffSet += pstIoBuf->ulDataLen;
         
-        pstFileInfo->pstarryFileIoBuf[uiIndex] = pstIoBuf;
+        pstFileInfo->starryChunkIoBuf[uiIndex].pstIoBuf = pstIoBuf;
+
+        MD5Init(&stMd5Ctx);
+        MD5Update(&stMd5Ctx, (UCHAR *)pstIoBuf->pcData, uiFileSize);
+        MD5Final(aucDigest,&stMd5Ctx);
+        MD5_ValToString_s(aucDigest, FSM_VAL_LEN, (UCHAR *)pstFileInfo->starryChunkIoBuf[uiIndex].acChunkCRCVal);
         pstFileInfo->uiIoBufNums++;
         if ( uiOffSet == uiFileSize )
         {
@@ -126,10 +133,10 @@ VOID FSM_MgrFileSpliceRelease(FSM_FILE_INFO_S *pstFileInfo)
     
     for(uiIndex=0; uiIndex < FSM_MAX_FILENUMS; uiIndex++)
     {
-        if ( NULL != pstFileInfo->pstarryFileIoBuf[uiIndex] )
+        if ( NULL != pstFileInfo->starryChunkIoBuf[uiIndex].pstIoBuf )
         {
-            COM_Iobuf_Free(pstFileInfo->pstarryFileIoBuf[uiIndex]);
-            pstFileInfo->pstarryFileIoBuf[uiIndex] = NULL;
+            COM_Iobuf_Free(pstFileInfo->starryChunkIoBuf[uiIndex].pstIoBuf);
+            pstFileInfo->starryChunkIoBuf[uiIndex].pstIoBuf = NULL;
         }
         else
         {
