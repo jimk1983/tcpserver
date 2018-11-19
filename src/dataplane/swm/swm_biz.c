@@ -143,7 +143,7 @@ LONG SWM_Biz_ChannelMatch(SWM_BIZ_CHANNEL_S *pstBizChannel, CHAR *pcData, ULONG 
     if ( NULL == pstBizChannel 
         || NULL == pcData )
     {
-        VOS_Printf("param error!");
+        VOS_Printf("111 param error!");
         return EMPTO_BIZTYPEID_UNKNOW;
     }
     
@@ -320,11 +320,16 @@ LONG SWM_Biz_ChannelCheckLen(CHAR *pcPack, UINT32 uiPackLen)
     SWM_BIZ_HEAD_S *pstSwmBiz = (SWM_BIZ_HEAD_S *)pcPack;
     ULONG           lPackLen = 0;
     
-    if ( NULL == pcPack 
-        || uiPackLen < SWM_BIZ_HEAD_LEN )
+    if ( NULL == pcPack )
     {
-        VOS_Printf("param error");
+        VOS_Printf("aaa param error,uiPackLen=%d", uiPackLen);
         return VOS_ERR;
+    }
+
+    if ( uiPackLen < SWM_BIZ_HEAD_LEN )
+    {
+        
+        return VOS_SYS_EWOULDBLOCK;
     }
 
     lPackLen = sizeof(SWM_BIZ_HEAD_S) + VOS_ntohl(pstSwmBiz->uiDataLen);
@@ -367,7 +372,7 @@ LONG SWM_Biz_ChannelPreGetPackLen(CHAR *pcPack)
 
     if ( NULL == pcPack  )
     {
-        VOS_Printf("param error");
+        VOS_Printf("zz param error");
         return VOS_ERR;
     }
 

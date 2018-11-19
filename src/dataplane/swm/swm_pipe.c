@@ -259,7 +259,7 @@ VOID SWM_TLS_PipeConnRelease(SWM_TLS_CONN_S *pstTlsConn)
         VOS_Printf("param error!");
         return;
     }
-
+    
     /*在管道中查找TLS业务节点*/
     pstPipeNode = SWM_TLS_PipeConnFoundTlsNode(pstTlsConn->pstBizChannel);
     if ( NULL == pstPipeNode  )
@@ -351,7 +351,7 @@ LONG SWM_TLS_PipeTransBufToNextPipeNode(SWM_PIPE_CONN_S *pstPipeCurNode, COM_IOB
     if ( NULL == pstPipeCurNode 
         || NULL == pstIobuf )
     {
-        VOS_Printf("param error!");
+        VOS_Printf("222 param error!");
         return SWM_PIPE_IOBUF_PARAM_ERR;
     }
 
@@ -450,7 +450,10 @@ LONG SWM_TLS_PipeTransBufToPrePipeNode(SWM_PIPE_CONN_S *pstPipeCurNode, COM_IOBU
                     pstPipePrevNode->stPipeDataDownProc.pvUserData, pstIobuf);
     if ( VOS_OK != lRet )
     {
-        VOS_Printf("next pipe deal the iobuf error!");
+        if ( SWM_PIPE_IOBUF_EWOULDBLOCK != lRet )
+        {
+            VOS_Printf("next pipe deal the iobuf error!lRet=%d", lRet);
+        }
         return lRet;
     }
     

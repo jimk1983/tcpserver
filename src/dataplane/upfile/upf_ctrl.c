@@ -233,8 +233,8 @@ INT32 UPF_Ctrl_Handler(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIobuf)
        
     uiCtrlCode = VOS_ntohl(pstUpfHead->uiCtrlCode);
     
-    VOS_Printf("UPF conn upper :recv the iobuf=%p, upf conn=%p, uiPackLen=%d, pstBizHead=%p, acDeviceLab=%s!",  
-        pstIobuf, pstUpfConn, uiPackLen, pstBizHead, pstUpfHead->acDeviceLab);
+    VOS_Printf("UPF conn upper :recv the iobuf=%p, upf conn=%p, uiPackLen=%d, pstBizHead=%p!",  
+        pstIobuf, pstUpfConn, uiPackLen, pstBizHead);
     
     switch(uiCtrlCode)
     {
@@ -273,7 +273,7 @@ INT32 UPF_Ctrl_Handler(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIobuf)
             
             pstUpfHead->uiCtrlCode      = VOS_htonl(UPSER_CTLCODE_KPVINFO_RESP);
 
-            COM_IOBUF_SETINPUTED_LEN(pstIobuf, sizeof(UPF_KVPINFO_S));
+            //COM_IOBUF_SETINPUTED_LEN(pstIobuf, sizeof(UPF_KVPINFO_S));
             
             lRet = UPF_Conn_TransBufToDownPipeNode(pstUpfConn, pstIobuf);
             if( VOS_ERR == lRet )
@@ -308,6 +308,10 @@ INT32 UPF_Ctrl_Handler(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIobuf)
             {
                  return VOS_ERR;
             }
+            else
+            {
+                COM_Iobuf_Free(pstIobuf);
+            }
         }    
         break;
         
@@ -335,6 +339,10 @@ INT32 UPF_Ctrl_Handler(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIobuf)
             if ( VOS_ERR == UPF_Ctrl_PipeDownData(pstUpfConn) )
             {
                 return VOS_ERR;
+            }
+            else
+            {
+                COM_Iobuf_Free(pstIobuf);
             }
         }
         break;

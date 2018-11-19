@@ -148,22 +148,19 @@ VOID COM_Iobuf_QueFree(COM_IOBUF_QUE_S *pstIobufQue)
         return;
     }
 
-    /*如果有多余的节点，则遍历删除，避免内存泄漏*/
-    if ( 0 < pstIobufQue->uiNum )
+    VOS_DLIST_FOR_EACH_ENTRY(pstIobuf, &pstIobufQue->stList, COM_IOBUF_S, stNode)
     {
-        VOS_DLIST_FOR_EACH_ENTRY(pstIobuf, &pstIobufQue->stList, COM_IOBUF_S, stNode)
-        {
-            /*先将下个节点保留*/
-            pstIobufTmp = VOS_DLIST_ENTRY(pstIobuf->stNode.next, COM_IOBUF_S, stNode);
-            
-            /*上面已经保存了，因此可以直接脱链*/
-            VOS_Node_Remove((&pstIobuf->stNode));
-            /*消息节点使用VOS_Malloc()申请的，便于内存监听*/
-            VOS_Free((CHAR *)pstIobuf);
-            /*进入下一个节点的判断*/
-            pstIobuf = pstIobufTmp;
-        }
-    }   
+        /*先将下个节点保留*/
+        pstIobufTmp = VOS_DLIST_ENTRY(pstIobuf->stNode.next, COM_IOBUF_S, stNode);
+        
+        /*上面已经保存了，因此可以直接脱链*/
+        VOS_Node_Remove((&pstIobuf->stNode));
+        /*消息节点使用VOS_Malloc()申请的，便于内存监听*/
+        VOS_Free((CHAR *)pstIobuf);
+        /*进入下一个节点的判断*/
+        pstIobuf = pstIobufTmp;
+    }
+        
     VOS_Free((CHAR *)pstIobufQue);  
 
 }

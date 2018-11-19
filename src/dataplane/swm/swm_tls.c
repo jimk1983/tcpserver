@@ -196,7 +196,6 @@ VOID SWM_TLS_ConnRecvCb(VOID *pvTlsConn)
         SWM_TLS_ConnDelNotify(pstTlsConn);
         return;
     }
-    
 
     VOS_Printf("swm tls conn recv cb entry, connfd=%d!", pstTlsConn->lConnfd);
     
@@ -225,7 +224,9 @@ VOID SWM_TLS_ConnRecvCb(VOID *pvTlsConn)
         }
         else 
         {
-            VOS_Printf("UTL_SSL_Read error!,fd=%d", pstTlsConn->lConnfd);
+            VOS_Printf("UTL_SSL_Read error!,fd=%d, error=%d, datalen=%d", 
+                pstTlsConn->lConnfd, VOS_GetLastError(),pstTlsConn->pstRecvIobuf->ulDataLen);
+            
             SWM_TLS_ConnDelNotify(pstTlsConn);
             return;
         }
@@ -260,7 +261,7 @@ VOID SWM_TLS_ConnRecvCb(VOID *pvTlsConn)
         pstTlsConn->pstRecvIobuf->ulPreDataLen = SWM_Biz_ChannelPreGetPackLen(pstTlsConn->pstRecvIobuf->pcData);
         if ( pstTlsConn->pstRecvIobuf->ulPreDataLen >= COM_IOBUF_LEN   )
         {
-            VOS_Printf("swm pre-check pack length exceed max-length, datalen=%d!",pstTlsConn->pstRecvIobuf->ulPreDataLen );
+            VOS_Printf("swm pre-check pack length exceed max-length, datalen=%d!",pstTlsConn->pstRecvIobuf->ulPreDataLen);
 
             SWM_TLS_ConnDelNotify(pstTlsConn);
             
@@ -524,11 +525,13 @@ VOID SWM_TLS_ConnExpireCb(VOID *pvTlsConn)
        3. Notify自己不负责具体的老化，只是设置标记位
            所有的业务在老化检查中，检查BizChannel-->ulExitConfirm标记，然后进行老化
        4. 所有节点的具体老化工作在ExpireCB回调中进行回收*/
+    #if 0
     if( VOS_TRUE != pstTlsConn->stExpireOps.ulExpireConfirm )
     {
         VOS_Printf("system error");
         return;
     }
+    #endif
     
     if(VOS_ERR == SWM_TLS_ConnRelease(pstTlsConn))
     {
@@ -677,8 +680,6 @@ LONG SWM_TLS_ConnRelease(SWM_TLS_CONN_S *pstTlsConn)
         VOS_Printf("RCT_Reactor_NetEvtOptsUnRegister error!");
     }
     
-    VOS_SOCK_Shutdown(pstTlsConn->lConnfd);
-    
     /*注意,一定要先注销老化,否则会再次进入,出现问题*/
     if(VOS_ERR == RCT_API_ExpireOpsEventUnRegister(&pstTlsConn->stExpireOps) )
     {
@@ -700,6 +701,8 @@ LONG SWM_TLS_ConnRelease(SWM_TLS_CONN_S *pstTlsConn)
     SWM_TLS_PipeConnRelease(pstTlsConn);
     
     SWM_Biz_ChannelRelease(pstTlsConn->pstBizChannel);
+
+    VOS_SOCK_Shutdown(pstTlsConn->lConnfd);
 
     VOS_SOCK_Close(pstTlsConn->lConnfd);
     

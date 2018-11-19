@@ -256,11 +256,11 @@ LONG UPF_Conn_PipeConnCtrlProc(VOID *pvhandler, ULONG ulCtrlCmd)
     VOS_Printf("UPF_Conn_PipeConnCtrlProc Entry! pstConn=%p", pstConn);
 
     /*如果已经进入老化，就不要再继续处理了*/
-    if( VOS_TRUE == pstConn->stExpireOps.ulExpireConfirm )
+    if( VOS_TRUE == pstConn->pstBizChannel->ulExitConfirm )
     {
         /*这里不应该发送*/
         VOS_Printf("system error!");
-        return;
+        return VOS_ERR;
     }
 
     switch(ulCtrlCmd)
@@ -454,7 +454,7 @@ LONG UPF_Conn_Release(UPF_CONN_S *pstConn)
     
     pstConn->pstBizChannel->ulExitConfirm  = VOS_TRUE;
 
-    /*BizChannel 中脱离本节点*/
+    /*重要: BizChannel 中脱离本节点*/
     VOS_DLIST_DEL(&pstConn->stPipe.stNode);
 
     if(VOS_ERR == RCT_API_NetOpsEventUnRegister(&pstConn->stNetEvtOps) )

@@ -39,18 +39,31 @@ typedef  enum
 #define UPF_FILELEN         32
 #define UPF_FILEVALEN       36
 
+
+typedef enum
+{
+    UPDEV_STATUSCODE_STOP = 0,
+    UPDEV_STATUSCODE_WORKING,
+
+    UPDEV_STATUSCODE_NUMS
+}UPDEV_STATUSCODE_E;
+    
+
 /*保活信息*/
 typedef struct tagUPFKVPInfo
 {
-    UINT32      uiLastVersion;              /*当前最新版本*/
-    UINT32      uiIntervalRate;             /*间隔时间*/
-    UINT32      uiFileSize;                 /*XML文件大小*/
-    CHAR        acAddrInfo[UPF_FILELEN];    /*服务器地址*/
-    CHAR        acFileName[UPF_FILELEN];    /*文件名称*/
-    CHAR        acFileValue[UPF_FILEVALEN]; /*文件MD5值*/
-    USHORT      usChunkNums;                /*块总数*/
-    USHORT      usResv;                     /*保留*/
-    UINT32      uiConnNums;                 /*服务器连接数*/
+    CHAR        acDevLabel[UPF_DEVLAB_LEN];         /*设备标签*/
+    UINT32      uiDevStatusCode;                    /*设备状态码*/
+    UINT32      uiTerminalStatusCode;               /*终端状态码*/
+    UINT32      uiLastVersion;                      /*当前最新版本*/
+    UINT32      uiIntervalRate;                     /*间隔时间*/
+    UINT32      uiFileSize;                         /*XML文件大小*/
+    CHAR        acAddrInfo[UPF_FILELEN];            /*服务器地址*/
+    CHAR        acFileName[UPF_FILELEN];            /*文件名称*/
+    CHAR        acFileValue[UPF_FILEVALEN];         /*文件MD5值*/
+    USHORT      usChunkNums;                        /*块总数*/
+    USHORT      usResv;                             /*保留*/
+    UINT32      uiConnNums;                         /*服务器连接数*/
 }UPF_KVPINFO_S, *PUPF_KVPINFO_S;
 
 /*使用16K的IOBUF传输,所以内容需要减去头部部分大小*/
@@ -85,7 +98,6 @@ typedef struct tagUPFHead
 {
     UINT32       uiCtrlCode;                    /*控制消息码*/
     UINT32       uiCtrlLength;                  /*数据长度*/
-    CHAR         acDeviceLab[UPF_DEVLAB_LEN];   /*设备标签*/
 }UPF_HEAD_S, *PUPF_HEAD_S;
 
 
