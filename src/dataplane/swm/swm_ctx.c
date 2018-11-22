@@ -42,14 +42,14 @@ VOID Swm_CtxMsgHandler(RCT_MSG_HEAD_S *pstHead, CHAR *pcMgtData, UINT32 uiLen)
     if ( NULL == pstHead
         || NULL == pcMgtData)
     {
-        VOS_Printf("param error!");
+        VOS_PRINT("param error!");
         return;
     }
 
     /*获取消息码*/
     ulMsgType = *((ULONG *)pcMgtData);
 
-    VOS_Printf("SWM ctx handler msg type=%d!", ulMsgType);
+    VOS_PRINT("SWM ctx handler msg type=%d!", ulMsgType);
    
     /*网关创建相关的消息*/
     switch(ulMsgType)
@@ -58,7 +58,7 @@ VOID Swm_CtxMsgHandler(RCT_MSG_HEAD_S *pstHead, CHAR *pcMgtData, UINT32 uiLen)
         case SWM_MSGTYPE_ADDTLSCONN:
             if ( VOS_ERR == SWM_TLS_ConnCreate((SWM_MSG_ADDCONN_S *)pcMgtData) )
             {
-                VOS_Printf("Vgm listen swm conn-node create error!");
+                VOS_PRINT("Vgm listen swm conn-node create error!");
             }
             break;
         default:
@@ -87,14 +87,14 @@ VOID SWM_CtxTaskInit(VOID *pvArg)
     /*业务通道注册创建, 本任务初始化需要在NEM/TCM等之前创建*/
     if ( VOS_ERR == SWM_Biz_ChannelMatchInit()  )
     {
-        VOS_Printf("SWM channel match init error!!");
+        VOS_PRINT("SWM channel match init error!!");
         return;
     }
 
     /*注册消息接收处理函数*/
     if(VOS_ERR == RCT_API_MgtHandlerRegister(RCT_TYPE_DP_SSL, RCT_SUBTYPE_SSL_SWM, "SWM",  Swm_CtxMsgHandler))
     {
-        VOS_Printf("SWM mgt register error!!");
+        VOS_PRINT("SWM mgt register error!!");
         SWM_Biz_ChannelMatchUnInit();
         return;
     }
@@ -115,7 +115,7 @@ VOID SWM_CtxTaskInit(VOID *pvArg)
     修改内容   : 新生成函数
 
 *****************************************************************************/
-VOID SWM_CtxTaskUnInit()
+VOID SWM_CtxTaskUnInit(VOID *argv)
 {    
     SWM_Biz_ChannelMatchUnInit();
 
@@ -144,11 +144,11 @@ LONG SWM_CtxInit()
     /*先注册上下文初始化*/
     if ( VOS_ERR == RCT_API_EnvTaskInitRegister(SWM_CtxTaskInit, NULL, RCT_TYPE_DP_SSL,RCT_SUBTYPE_SSL_SWM,  SWM_CtxTaskUnInit) )
     {
-        VOS_Printf("Swm ctx inti register error!!");
+        VOS_PRINT("Swm ctx inti register error!!");
         return VOS_ERR;
     }
     
-    VOS_Printf("SWM init ...........................OK!");
+    VOS_PRINT("SWM init ...........................OK!");
     return VOS_OK;
 }
 

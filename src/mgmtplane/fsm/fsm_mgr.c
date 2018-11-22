@@ -182,6 +182,8 @@ FSM_FILE_INFO_S *FSM_MgrFileInfoCreate(CHAR *pcFileDir, UINT32 uiFileType)
     VOS_RWLOCK_INIT(pstFileInfo->stLock);
 
     VOS_StrCat(pstFileInfo->stFileInfo.acFullName, pcFileDir);
+
+    VOS_StrCat(pstFileInfo->stFileInfo.acFullName, "/");
     
     if( VOS_ERR == FSM_Conf_GetFileName(acFileName ,VOS_DIRSNAME_LEN, uiFileType))
     {

@@ -139,20 +139,18 @@ LONG SWM_Biz_ChannelMatch(SWM_BIZ_CHANNEL_S *pstBizChannel, CHAR *pcData, ULONG 
     ULONG ulBizType   = EMPTO_BIZTYPEID_UNKNOW;
     swm_biz_match_func pfcb = NULL;
 
-    
     if ( NULL == pstBizChannel 
         || NULL == pcData )
     {
-        VOS_Printf("111 param error!");
+        VOS_Printf("param error!");
         return EMPTO_BIZTYPEID_UNKNOW;
     }
     
-    VOS_Printf("SWM_CTX_BizMatch Start!pstBizChannel=%p, ulDataLen=%d", 
-        pstBizChannel, ulDataLen);
+    VOS_Printf("SWM_CTX_BizMatch Start!pstBizChannel=%p, ulDataLen=%d", pstBizChannel, ulDataLen);
     
     for(ulIndex=0; ulIndex < EMPTO_BIZTYPEID_NUMS; ulIndex++)
     {
-          pfcb = g_pstSwmBizMatch->stArrayBizTypeMatch[ulIndex].pvFunc;
+          pfcb = (swm_biz_match_func)g_pstSwmBizMatch->stArrayBizTypeMatch[ulIndex].pvFunc;
           if ( NULL != pfcb  )
           {
             /*匹配函数: pvUserData就是每个业务的CTX，例如:pvNemCtx*/
@@ -322,7 +320,7 @@ LONG SWM_Biz_ChannelCheckLen(CHAR *pcPack, UINT32 uiPackLen)
     
     if ( NULL == pcPack )
     {
-        VOS_Printf("aaa param error,uiPackLen=%d", uiPackLen);
+        VOS_PRINT("param error,uiPackLen=%d", uiPackLen);
         return VOS_ERR;
     }
 
@@ -336,17 +334,17 @@ LONG SWM_Biz_ChannelCheckLen(CHAR *pcPack, UINT32 uiPackLen)
 
     if (  uiPackLen == lPackLen )
     {
-        VOS_Printf("Len check OK");
+        VOS_PRINT("Len check OK");
         return VOS_OK;
     }
 
     if ( uiPackLen < lPackLen  )
     {
-        VOS_Printf("Len check recv continue");
+        VOS_PRINT("Len check recv continue");
         return VOS_SYS_EWOULDBLOCK;
     }
     
-    VOS_Printf("packet check len error!, packlen=%d,  head ctrl len=%d", uiPackLen, VOS_ntohs(pstSwmBiz->uiDataLen));
+    VOS_PRINT("packet check len error!, packlen=%d,  head ctrl len=%d", uiPackLen, VOS_ntohs(pstSwmBiz->uiDataLen));
     return VOS_ERR;
 }
 

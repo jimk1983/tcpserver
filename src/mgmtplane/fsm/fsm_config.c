@@ -26,11 +26,11 @@ const FSM_CONF_INFO_S g_starryFsmConfig[]=
 {
     {
         FSM_CONF_FILE_XML,
-        "/UpgrateInfo.xml"
+        "UpgrateInfo.xml"
     },
     {
         FSM_CONF_FILE_APP,
-        "/TerminalCollector.exe"
+        "TerminalCollector.exe"
     },
 };
 

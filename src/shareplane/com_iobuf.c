@@ -43,7 +43,7 @@ COM_IOBUF_S *COM_Iobuf_Malloc(ULONG ulMid)
     pstIobuf = (COM_IOBUF_S *)VOS_Malloc(ulMid, ulBufSize);
     if ( NULL == pstIobuf )
     {
-        VOS_Printf("malloc error!");
+        VOS_PRINT("malloc error!");
         return NULL;
     }
 

@@ -255,6 +255,7 @@ INT32 UPF_Ctrl_Handler(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIobuf)
             pstKvpInfo->uiLastVersion   = VOS_htonl(pstFileInfo->stFileInfo.stFileResInfo.uiFileVersion);
             pstKvpInfo->uiIntervalRate  = VOS_htonl(UPF_KEEPALIVE_RATEVAL);
             pstKvpInfo->uiFileSize      = VOS_htonl(pstFileInfo->stFileInfo.stFileResInfo.uiFileSize);
+            pstKvpInfo->usCmdCode       = VOS_htons(UPDEV_CMDCODE_UPDATA_FORCE);
 
             if( VOS_ERR == FSM_Conf_GetServerAddrInfo(pstKvpInfo->acAddrInfo, UPF_FILELEN))
             {
@@ -271,10 +272,7 @@ INT32 UPF_Ctrl_Handler(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIobuf)
             VOS_Mem_Zero(pstKvpInfo->acFileValue, UPF_FILEVALEN);
             VOS_StrCpy_S(pstKvpInfo->acFileValue, UPF_FILEVALEN, pstFileInfo->stFileInfo.stFileResInfo.acFileCRCVal);
             
-            pstUpfHead->uiCtrlCode      = VOS_htonl(UPSER_CTLCODE_KPVINFO_RESP);
-
-            //COM_IOBUF_SETINPUTED_LEN(pstIobuf, sizeof(UPF_KVPINFO_S));
-            
+            pstUpfHead->uiCtrlCode      = VOS_htonl(UPSER_CTLCODE_KPVINFO_RESP);            
             lRet = UPF_Conn_TransBufToDownPipeNode(pstUpfConn, pstIobuf);
             if( VOS_ERR == lRet )
             {
