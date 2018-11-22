@@ -39,6 +39,8 @@ typedef  enum
 #define UPF_FILELEN         32
 #define UPF_FILEVALEN       36
 
+/*使用16K的IOBUF传输,所以内容需要减去头部部分大小*/
+#define UPF_CONTENTLEN      16000   
 
 typedef enum
 {
@@ -47,12 +49,21 @@ typedef enum
 
     UPDEV_STATUSCODE_NUMS
 }UPDEV_STATUSCODE_E;
-    
 
+
+typedef enum
+{
+    UPDEV_CMDCODE_UNKNOW = 0,
+    IPDEV_CMDCODE_UPDATA_AUTO,  /* 自动开机更新 */
+    UPDEV_CMDCODE_UPDATA_FORCE, /* 强制更新 */
+    UPDEV_CMDCODE_NUMS
+}UPDEV_CMDCODE_E;
+    
 /*保活信息*/
 typedef struct tagUPFKVPInfo
 {
     CHAR        acDevLabel[UPF_DEVLAB_LEN];         /*设备标签*/
+    CHAR        acDevDecryptor[UPF_DEVLAB_LEN];     /*设备描述*/
     UINT32      uiDevStatusCode;                    /*设备状态码*/
     UINT32      uiTerminalStatusCode;               /*终端状态码*/
     UINT32      uiLastVersion;                      /*当前最新版本*/
@@ -62,12 +73,10 @@ typedef struct tagUPFKVPInfo
     CHAR        acFileName[UPF_FILELEN];            /*文件名称*/
     CHAR        acFileValue[UPF_FILEVALEN];         /*文件MD5值*/
     USHORT      usChunkNums;                        /*块总数*/
-    USHORT      usResv;                             /*保留*/
+    USHORT      usCmdCode;                          /*命令代码*/
     UINT32      uiConnNums;                         /*服务器连接数*/
 }UPF_KVPINFO_S, *PUPF_KVPINFO_S;
 
-/*使用16K的IOBUF传输,所以内容需要减去头部部分大小*/
-#define UPF_CONTENTLEN      16000   
 
 typedef struct tagUpfFileDataInfoRequest
 {
