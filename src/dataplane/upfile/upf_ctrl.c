@@ -302,6 +302,7 @@ INT32 UPF_Ctrl_Handler(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIobuf)
             pstUpfConn->uiMgrChunkCount         = 0;
             pstUpfConn->uiMgrChunkStatus        = UPF_TRNSTATUS_SNDING;
             pstUpfConn->uiUpfCtrlCode           = UPSER_CTLCODE_XMLFILE;
+            
             VOS_Mem_Copy_S(&pstUpfConn->stFileEntryInfo, sizeof(FSM_RENTRY_S), &pstFileInfo->stFileInfo, sizeof(FSM_RENTRY_S));
             
             if ( VOS_ERR == UPF_Ctrl_PipeDownData(pstUpfConn) )
