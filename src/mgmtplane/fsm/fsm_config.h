@@ -19,7 +19,7 @@
 
 
 /*固定的版本*/
-#define FSM_APP_VERSION  0x10000001  //1.0.0.1  
+#define FSM_APP_VERSION  0x01000002  //1.0.0.1  
 
 
 /*名字不要太长*/

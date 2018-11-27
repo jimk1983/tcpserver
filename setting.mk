@@ -1,5 +1,5 @@
 #公共部分
-CC=g++
+CC=gcc
 CFLAGS=-c 
 MAKE=make
 AR=ar cr
