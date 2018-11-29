@@ -120,7 +120,7 @@ struct tagSwmBizMatchCtx
     VOID        *pvCtx;              /*每个业务的上下文*/
 };
 
-typedef LONG (*swm_biz_match_func)(SWM_BIZ_CHANNEL_S *pstBizChannel, CHAR *pcData, ULONG ulDataLen);
+typedef ULONG (*swm_biz_match_func)(SWM_BIZ_CHANNEL_S *pstBizChannel, CHAR *pcData, ULONG ulDataLen);
 
 /*SWM 业务上下文*/
 typedef struct tagSwmBizMatch

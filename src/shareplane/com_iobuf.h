@@ -29,7 +29,7 @@ typedef struct tagComIobuf
     ULONG               ulPreDataLen;     /*预先获取的要接收的包的大小*/
     ULONG               ulDataLen;        /*本次的接收到的包的大小或者待发送的大小*/
     ULONG               ulOffset;         /*数据偏移*/
-    LONG                lLeftLen;         /*剩余未有使用的缓存长度*/
+    ULONG               lLeftLen;         /*剩余未有使用的缓存长度*/
     CHAR                pcData[0];        /*数据起始地址*/
 }COM_IOBUF_S, *PCOM_IOBUF_S;
 

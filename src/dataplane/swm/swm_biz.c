@@ -71,7 +71,7 @@ SWM_BIZ_CHANNEL_S *SWM_Biz_ChannelCreate(LONG lSockfd)
     pstBizChannel->pstSwmSendQueue = COM_Iobuf_QueCreate();
     if(NULL == pstBizChannel->pstSwmSendQueue )
     {
-        VOS_Printf("send queue create error!");
+        VOS_Printf((CHAR *)"send queue create error!");
         VOS_Free((CHAR *)pstBizChannel);
         return NULL;
     }

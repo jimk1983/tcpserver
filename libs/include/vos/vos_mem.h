@@ -43,6 +43,10 @@
 #define VOS_MEM_FREED       0
 #define VOS_MEM_USED         1
 
+#define VOS_Malloc(ulMid, ulSize)  VOS_MemCreate_X(ulMid, ulSize,__FILE__,__LINE__)
+
+#define VOS_Free(pcMemBuf)    VOS_MemFree_X(pcMemBuf)
+
 INT32 VOS_MemMgmt_Init();
 
 VOID VOS_MemMgmt_UnInit();
@@ -50,10 +54,6 @@ VOID VOS_MemMgmt_UnInit();
 VOID *VOS_MemCreate_X(ULONG ulMid, INT32 ulBufSize, const CHAR *pcFileName, INT32 ulLine);
 
 VOID VOS_MemFree_X(CHAR *pcMemBuf);
-
-#define VOS_Malloc(ulMid, ulSize)  VOS_MemCreate_X(ulMid, ulSize,__FILE__,__LINE__)
-
-#define VOS_Free(pcMemBuf)    VOS_MemFree_X(pcMemBuf)
 
 VOID VOS_MM_MidTypeShow(UINT32 uiType,  UINT32 uiMid);
 

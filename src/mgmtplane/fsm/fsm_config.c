@@ -50,9 +50,9 @@ const FSM_CONF_INFO_S g_starryFsmConfig[]=
     修改内容   : 新生成函数
 
 *****************************************************************************/
-LONG   FSM_Conf_GetFileNums()
+ULONG   FSM_Conf_GetFileNums()
 {
-    LONG uiNums = VOS_ERR;
+    ULONG uiNums = 0;
 
     uiNums = sizeof(g_starryFsmConfig)/sizeof(FSM_CONF_INFO_S);
 

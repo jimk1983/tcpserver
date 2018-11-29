@@ -16,6 +16,11 @@
     修改内容   : 创建文件
 
 ******************************************************************************/
+        
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <vos_config.h>
 #include <vos_basetype.h>
 #include <vos_string.h>
@@ -43,4 +48,8 @@
 #include <vos_shm.h>
 #include <vos_timer.h>
 
+    
+#ifdef __cplusplus
+}
+#endif
 

@@ -365,7 +365,7 @@ LONG VGM_SSLConn_VTCreate(USHORT usPort)
     
 
     /*SSL监听节点初始化*/
-    pstVgmCtx->pstSslListenConn = VGM_SSLConn_ListenCreate(VGM_DEFAULT_IPADDR, usPort);
+    pstVgmCtx->pstSslListenConn = VGM_SSLConn_ListenCreate((CHAR *)VGM_DEFAULT_IPADDR, usPort);
     if ( NULL == pstVgmCtx->pstSslListenConn )
     {
         VOS_Printf("VGM_SSLConn_ListenCreate failed!");

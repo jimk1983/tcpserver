@@ -107,7 +107,7 @@ LONG UPF_CtxCreate()
 
         /*注册前赋值*/
         stBizCtx.ulBizType = EMPTO_BIZTYPEID_UPF;
-        stBizCtx.pvFunc =  UPF_CtxBizMatch;
+        stBizCtx.pvFunc =  (VOID*)UPF_CtxBizMatch;
         stBizCtx.pvCtx   = g_pstUPFCtx;
 
         /*业务识别注册，在SWM模块中识别*/    
@@ -191,8 +191,9 @@ VOID UPF_CtxTaskInit(VOID *pvArg)
     修改内容   : 新生成函数
 
 *****************************************************************************/
-VOID UPF_CtxTaskUnInit()
+VOID UPF_CtxTaskUnInit(VOID *argv)
 {
+    
     UPF_CtxRelease();
 }
 

@@ -185,7 +185,7 @@ FSM_FILE_INFO_S *FSM_MgrFileInfoCreate(CHAR *pcFileDir, UINT32 uiFileType)
 
     VOS_StrCat(pstFileInfo->stFileInfo.acFullName, "/");
     
-    if( VOS_ERR == FSM_Conf_GetFileName(acFileName ,VOS_DIRSNAME_LEN, uiFileType))
+    if( VOS_ERR == FSM_Conf_GetFileName(acFileName ,VOS_DIRSNAME_LEN, (FSM_CONF_FILE_E)uiFileType))
     {
         free(pstFileInfo);
         return NULL;
@@ -336,7 +336,7 @@ LONG   FSM_MgrEnvInit()
     }
 
     g_pstFsmMgrCtx->uiCurNums = FSM_Conf_GetFileNums();
-    if ( VOS_ERR == g_pstFsmMgrCtx->uiCurNums
+    if ( 0 == g_pstFsmMgrCtx->uiCurNums
         || g_pstFsmMgrCtx->uiCurNums >= FSM_MAX_NUMS )
     {   
         free(g_pstFsmMgrCtx);

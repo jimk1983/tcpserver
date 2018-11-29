@@ -19,7 +19,7 @@
 
 
 /*固定的版本*/
-#define FSM_APP_VERSION  0x01000002  //1.0.0.1  
+#define FSM_APP_VERSION  0x01000006  //1.0.0.1  
 
 
 /*名字不要太长*/
@@ -44,7 +44,7 @@ typedef struct tagFsmFileConfigInfo
 
 
 
-LONG    FSM_Conf_GetFileNums();
+ULONG    FSM_Conf_GetFileNums();
 
 LONG    FSM_Conf_GetServerAddrInfo(CHAR *pcAddrInfo, INT32 iLen);
 

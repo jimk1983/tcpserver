@@ -247,12 +247,12 @@ VOID SWM_TLS_ConnRecvCb(VOID *pvTlsConn)
              /* 接收到1个字节,还得继续接收 */
              VOS_Printf("UTL_SSL_Read must be continue!");
              /*设置接收到更新的长度*/
-             COM_IOBUF_SETINPUTED_LEN(pstTlsConn->pstRecvIobuf, lError);
+             COM_IOBUF_SETINPUTED_LEN(pstTlsConn->pstRecvIobuf, (ULONG)lError);
              return;
          }
          
          /*继续更新*/
-         COM_IOBUF_SETINPUTED_LEN(pstTlsConn->pstRecvIobuf, lError);
+         COM_IOBUF_SETINPUTED_LEN(pstTlsConn->pstRecvIobuf, (ULONG)lError);
     }
 
     /* 严格根据长度更新来接收，需要获取一个接收的准确的长度信息 */

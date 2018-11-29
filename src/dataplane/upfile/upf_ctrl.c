@@ -97,7 +97,7 @@ LONG UFP_Ctrl_MakePacketDataResponse(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstOut
     pstData->uiChunkSize  = VOS_htonl(pstChunkBuf->ulDataLen);
     VOS_Mem_Copy_S(pstData->acChunkValue, UPF_FILEVALEN, pcChunkCrcValue, UPF_FILEVALEN);
     
-    if ( VOS_ERR == FSM_Conf_GetFileName(pstData->acFileName, UPF_FILELEN, pstUpfConn->stFileEntryInfo.stFileResInfo.uiFileType) )
+    if ( VOS_ERR == FSM_Conf_GetFileName(pstData->acFileName, UPF_FILELEN, (FSM_CONF_FILE_E)pstUpfConn->stFileEntryInfo.stFileResInfo.uiFileType) )
     {
         return VOS_ERR;
     }
@@ -145,7 +145,7 @@ INT32 UPF_Ctrl_PipeDownData(UPF_CONN_S *pstUpfConn)
         uiChunkIndex = pstUpfConn->uiMgrChunkStartIndex + pstUpfConn->uiMgrChunkCount;
         
         /*»ñÈ¡ÄÚ´æ*/
-        pstChunkInfo = (PFSM_CHUNK_IOBUF_S)FSM_Conf_GetChunkIobufByIndex(pstUpfConn->stFileEntryInfo.stFileResInfo.uiFileType, uiChunkIndex);
+        pstChunkInfo = (PFSM_CHUNK_IOBUF_S)FSM_Conf_GetChunkIobufByIndex((FSM_CONF_FILE_E)pstUpfConn->stFileEntryInfo.stFileResInfo.uiFileType, uiChunkIndex);
         if ( NULL == pstChunkInfo )
         {
             return VOS_ERR;

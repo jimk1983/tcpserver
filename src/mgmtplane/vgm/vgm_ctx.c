@@ -62,7 +62,7 @@ VOID VGM_TCP_CtxTaskInit(VOID *pvArg)
     修改内容   : 新生成函数
 
 *****************************************************************************/
-VOID VGM_TCP_CtxTaskUnInit()
+VOID VGM_TCP_CtxTaskUnInit(VOID *argv)
 {
 
 }
@@ -114,7 +114,7 @@ LONG VGM_TCP_CtxInit()
 *****************************************************************************/
 VOID VGM_TCP_CtxUnInit()
 {
-    VGM_TCP_CtxTaskUnInit();
+    VGM_TCP_CtxTaskUnInit(NULL);
 }
 
 /*****************************************************************************
