@@ -80,8 +80,8 @@ SWM_BIZ_CHANNEL_S *SWM_Biz_ChannelCreate(LONG lSockfd)
     pstBizChannel->ulExitConfirm = VOS_FALSE;
     pstBizChannel->ulBindFlags = VOS_FALSE;
     
-    VOS_Printf("Create the Biz channel node ok, sockfd=%d, client addr=[%s:%d]",
-        lSockfd, acAddr, pstBizChannel->stClientInfo.ulClientPort);
+    //VOS_Printf("Create the Biz channel node ok, sockfd=%d, client addr=[%s:%d]",
+    //    lSockfd, acAddr, pstBizChannel->stClientInfo.ulClientPort);
     
     return pstBizChannel;
 }
@@ -146,7 +146,7 @@ LONG SWM_Biz_ChannelMatch(SWM_BIZ_CHANNEL_S *pstBizChannel, CHAR *pcData, ULONG 
         return EMPTO_BIZTYPEID_UNKNOW;
     }
     
-    VOS_Printf("SWM_CTX_BizMatch Start!pstBizChannel=%p, ulDataLen=%d", pstBizChannel, ulDataLen);
+    //VOS_Printf("SWM_CTX_BizMatch Start!pstBizChannel=%p, ulDataLen=%d", pstBizChannel, ulDataLen);
     
     for(ulIndex=0; ulIndex < EMPTO_BIZTYPEID_NUMS; ulIndex++)
     {
@@ -169,7 +169,7 @@ LONG SWM_Biz_ChannelMatch(SWM_BIZ_CHANNEL_S *pstBizChannel, CHAR *pcData, ULONG 
             }
         }
     }
-    VOS_Printf("Match the [%d] Ctx bizness!", ulIndex);
+    //VOS_Printf("Match the [%d] Ctx bizness, type=%d!", ulIndex, ulBizType);
     return ulBizType;
 }
 
@@ -334,17 +334,17 @@ LONG SWM_Biz_ChannelCheckLen(CHAR *pcPack, UINT32 uiPackLen)
 
     if (  uiPackLen == lPackLen )
     {
-        VOS_PRINT("Len check OK");
+        //VOS_PRINT("Len check OK");
         return VOS_OK;
     }
 
     if ( uiPackLen < lPackLen  )
     {
-        VOS_PRINT("Len check recv continue");
+        //VOS_PRINT("Len check recv continue, uiPackLen=%d", uiPackLen);
         return VOS_SYS_EWOULDBLOCK;
     }
     
-    VOS_PRINT("packet check len error!, packlen=%d,  head ctrl len=%d", uiPackLen, VOS_ntohs(pstSwmBiz->uiDataLen));
+    //VOS_PRINT("packet check len error!, packlen=%d,  head ctrl len=%d", uiPackLen, VOS_ntohs(pstSwmBiz->uiDataLen));
     return VOS_ERR;
 }
 

@@ -42,7 +42,7 @@
 *****************************************************************************/
 LONG SWM_TLS_PipeConnDataUpperProc(VOID *pvhandler, COM_IOBUF_S *pstIobuf)
 {
-    SWM_TLS_CONN_S *pstTlsConn = NULL;
+    //SWM_TLS_CONN_S *pstTlsConn = NULL;
     
     if ( NULL == pvhandler 
         || NULL == pstIobuf )
@@ -51,9 +51,9 @@ LONG SWM_TLS_PipeConnDataUpperProc(VOID *pvhandler, COM_IOBUF_S *pstIobuf)
         return VOS_ERR;
     }
 
-    pstTlsConn = (SWM_TLS_CONN_S *)pvhandler;
+    //pstTlsConn = (SWM_TLS_CONN_S *)pvhandler;
 
-    VOS_Printf("swm tls pipe conn=%p", pstTlsConn);
+    //VOS_Printf("swm tls pipe conn=%p", pstTlsConn);
 
     return VOS_OK;                         
 }
@@ -79,6 +79,7 @@ LONG SWM_TLS_PipeConnDataUpperProc(VOID *pvhandler, COM_IOBUF_S *pstIobuf)
 LONG SWM_TLS_PipeConnDataDownProc(VOID *pvhandler, COM_IOBUF_S *pstIobuf)
 {
     SWM_TLS_CONN_S *pstTlsConn = NULL;
+    UINT32          uiNums = 0;
     
      if ( NULL == pvhandler
         || NULL == pstIobuf )
@@ -87,14 +88,15 @@ LONG SWM_TLS_PipeConnDataDownProc(VOID *pvhandler, COM_IOBUF_S *pstIobuf)
         return VOS_ERR;
     }
 
-    VOS_Printf("swm pipe down entry ,send out!");
+    //VOS_Printf("swm pipe down entry ,send out!");
 
     pstTlsConn = (SWM_TLS_CONN_S *)pvhandler;
 
-    if ( SWM_PIPE_IOBUF_THLD_HIGH <= COM_Iobuf_QueGetNums(pstTlsConn->pstBizChannel->pstSwmSendQueue) )
+    uiNums = COM_Iobuf_QueGetNums(pstTlsConn->pstBizChannel->pstSwmSendQueue);
+    if ( SWM_PIPE_IOBUF_THLD_HIGH <= uiNums )
     {
         /*这里先返回该阻塞值, 先不做处理*/
-        VOS_Printf("iobuf send exceed the high threshold!");
+        VOS_Printf("iobuf send exceed the high threshold, nums=%d!", uiNums);
         
         /*NEM节点将数据发送过来后，进入发送的队列*/
         (VOID)COM_Iobuf_QuePush(pstTlsConn->pstBizChannel->pstSwmSendQueue, pstIobuf);
@@ -129,7 +131,7 @@ LONG SWM_TLS_PipeConnDataDownProc(VOID *pvhandler, COM_IOBUF_S *pstIobuf)
 *****************************************************************************/
 LONG SWM_TLS_PipeConnCtrlProc(VOID *pvhandler, ULONG ulCtrlCmd)
 {
-    SWM_TLS_CONN_S *pstTlsConn = NULL;
+    //SWM_TLS_CONN_S *pstTlsConn = NULL;
     
      if ( NULL == pvhandler )
     {
@@ -137,9 +139,9 @@ LONG SWM_TLS_PipeConnCtrlProc(VOID *pvhandler, ULONG ulCtrlCmd)
         return VOS_ERR;
     }
 
-    pstTlsConn = (SWM_TLS_CONN_S *)pvhandler;
+    //pstTlsConn = (SWM_TLS_CONN_S *)pvhandler;
     
-    VOS_Printf("SWM tls ctrl proc tls conn=%p", pstTlsConn);
+    //VOS_Printf("SWM tls ctrl proc tls conn=%p", pstTlsConn);
     
     return VOS_OK;
 }
@@ -371,7 +373,7 @@ LONG SWM_TLS_PipeTransBufToNextPipeNode(SWM_PIPE_CONN_S *pstPipeCurNode, COM_IOB
     /*下一个节点，不能是表头，而是实际存在的业务管道节点*/
     if ( pstNode->next == pstNode->prev )
     {
-        VOS_Printf("pipe node next is empty!");
+        VOS_Printf("22 pipe node next is empty!");
         return SWM_PIPE_IOBUF_PIPENODE_ERR;
     }
 
@@ -382,7 +384,7 @@ LONG SWM_TLS_PipeTransBufToNextPipeNode(SWM_PIPE_CONN_S *pstPipeCurNode, COM_IOB
         return SWM_PIPE_IOBUF_PIPEFUNC_ERR;
     }
     
-    VOS_Printf("pipe node next  found the upper function!(%p)", pstPipeNextNode->stPipeDataUpperProc.pvcbFunc);
+    //VOS_Printf("pipe node next  found the upper function!(%p)", pstPipeNextNode->stPipeDataUpperProc.pvcbFunc);
 
     /*从前一个节点过来的推送给上行的执行*/
     lRet =  ((swm_pipe_dataupperproc_cb)pstPipeNextNode->stPipeDataUpperProc.pvcbFunc)(
@@ -420,8 +422,8 @@ LONG SWM_TLS_PipeTransBufToPrePipeNode(SWM_PIPE_CONN_S *pstPipeCurNode, COM_IOBU
         return SWM_PIPE_IOBUF_PARAM_ERR;
     }
 
-    VOS_Printf("pstPipeCurNode->stNode=%p, prev=%p, next[head]=%p!", 
-            &pstPipeCurNode->stNode, pstPipeCurNode->stNode.prev, pstPipeCurNode->stNode.next);
+    //VOS_Printf("pstPipeCurNode->stNode=%p, prev=%p, next[head]=%p!", 
+    //        &pstPipeCurNode->stNode, pstPipeCurNode->stNode.prev, pstPipeCurNode->stNode.next);
     
     /*获取推送的前一个节点，该节点必须存在*/
     pstPipePrevNode  = VOS_DLIST_ENTRY(pstPipeCurNode->stNode.prev, SWM_PIPE_CONN_S, stNode);
@@ -502,7 +504,7 @@ LONG SWM_TLS_PipeTransCtrlToNextPipeNode(SWM_PIPE_CONN_S *pstPipeCurNode, ULONG 
     /*下一个节点，不能是表头，而是实际存在的业务管道节点*/
     if ( pstNode->next == pstNode->prev )
     {
-        VOS_Printf("pipe node next is empty!");
+        //VOS_Printf("11 pipe node next is empty!");
         return SWM_PIPE_IOBUF_PIPENODE_ERR;
     }
 

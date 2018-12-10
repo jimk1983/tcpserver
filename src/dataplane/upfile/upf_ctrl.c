@@ -28,16 +28,16 @@
 /*数据流返回时候的组装报文*/
 VOID UPF_Ctrl_MakeCommBizHeadLen(COM_IOBUF_S *pstIobuf, UINT32 uiLocalSockfd, UINT32 uiStreamLen)
 {
-    UPF_HEAD_S      *pstBizHead = NULL;
+    //UPF_HEAD_S      *pstBizHead = NULL;
     
     if  (NULL == pstIobuf)
     {
         return;
     }
 
-    pstBizHead = (UPF_HEAD_S *)(pstIobuf->pcData);
+    //pstBizHead = (UPF_HEAD_S *)(pstIobuf->pcData);
 
-    VOS_Printf("upf ctrl make pstBizhead=%p", pstBizHead);
+    //VOS_Printf("upf ctrl make pstBizhead=%p", pstBizHead);
   
     return;
 }
@@ -168,7 +168,7 @@ INT32 UPF_Ctrl_PipeDownData(UPF_CONN_S *pstUpfConn)
         lRet = UPF_Conn_TransBufToDownPipeNode(pstUpfConn, pstOutIobuf);
         if( VOS_ERR == lRet )
         {
-            VOS_Printf("pipe down iobuf error!");
+            VOS_Printf("pipe down iobuf error!err=%d", lRet);
             COM_Iobuf_Free(pstOutIobuf);
             return VOS_ERR;
         }
@@ -182,13 +182,15 @@ INT32 UPF_Ctrl_PipeDownData(UPF_CONN_S *pstUpfConn)
             VOS_Printf("updata file transfer down EwouldBlocked!");
             break;
         }
-    }
 
-    /*是不是已经最后一片*/
-    if ( uiChunkIndex == pstUpfConn->uiMgrChunkNums )
-    {
-        /*发送结束了*/
-        pstUpfConn->uiMgrChunkStatus = UPF_TRNSTATUS_SNDEND;
+        /*是不是已经最后一片*/
+        if ( uiChunkIndex == pstUpfConn->uiMgrChunkNums )
+        {
+            //VOS_Printf("UPF_Ctrl down data, uiChunkIndex=%d,pstUpfConn->uiMgrChunkCount=%d,!",uiChunkIndex, pstUpfConn->uiMgrChunkCount);
+            /*发送结束了*/
+            pstUpfConn->uiMgrChunkStatus = UPF_TRNSTATUS_SNDEND;
+            break;
+        }
     }
 
     return VOS_OK;
@@ -233,8 +235,8 @@ INT32 UPF_Ctrl_Handler(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIobuf)
        
     uiCtrlCode = VOS_ntohl(pstUpfHead->uiCtrlCode);
     
-    VOS_Printf("UPF conn upper :recv the iobuf=%p, upf conn=%p, uiPackLen=%d, pstBizHead=%p!",  
-        pstIobuf, pstUpfConn, uiPackLen, pstBizHead);
+    //VOS_Printf("UPF conn upper :recv the iobuf=%p, upf conn=%p, uiPackLen=%d, pstBizHead=%p!",  
+    //    pstIobuf, pstUpfConn, uiPackLen, pstBizHead);
     
     switch(uiCtrlCode)
     {
@@ -244,6 +246,15 @@ INT32 UPF_Ctrl_Handler(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIobuf)
             PFSM_FILE_INFO_S    pstFileInfo = NULL;
 
             pstKvpInfo = (PUPF_KVPINFO_S)(pcPacket + SWM_BIZ_HEAD_LEN + sizeof(UPF_HEAD_S));
+            
+            VOS_PRINT("TerminalID: [%s]-->Keepalive: AppVersion=%08x, Desptor=%s",
+                pstKvpInfo->acDevLabel, 
+                VOS_ntohl(pstKvpInfo->uiLastVersion),
+                pstKvpInfo->acDevDecptor);
+            if ( '\0' == pstUpfConn->acTerminalID[0]  )
+            {
+                VOS_StrCpy_S(pstUpfConn->acTerminalID, UPF_DEVLAB_LEN-1, pstKvpInfo->acDevLabel);
+            }
 
             pstFileInfo = FSM_Conf_GetFileInfo(FSM_CONF_FILE_XML);
             if ( NULL == pstFileInfo )
@@ -346,6 +357,8 @@ INT32 UPF_Ctrl_Handler(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIobuf)
         }
         break;
         default:
+            VOS_Printf("UPF conn upper :recv the iobuf=%p, upf conn=%p, uiPackLen=%d, pstBizHead=%p!",  
+                pstIobuf, pstUpfConn, uiPackLen, pstBizHead);
             break;
     }
         

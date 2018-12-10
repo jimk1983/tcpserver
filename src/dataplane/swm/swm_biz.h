@@ -57,7 +57,6 @@ typedef struct tagSWMBizUserInfo
     UINT32   ulUserID;           /*用户的ID*/
     UINT32   ulSessionID;       /*用户的会话ID*/
     UINT32 	 uiFamilyID;		/*家庭成员信息*/
-    
 }SWM_BIZ_USER_INFO_S;
 
 /*本通道所属的虚拟网关的信息*/
@@ -91,13 +90,13 @@ struct tagSWMBizChannel
 
     /*是否客户端阻塞发送不成功，断开连接, 最大SWM_SNDBLOCK_MAXNUMS*/
     ULONG   ulSndBlockCount;
-    
+
     /*本通道的客户端信息*/
     SWM_BIZ_CLIENT_INFO_S 	stClientInfo;
     /*本通道的用户信息*/
-    //SWM_BIZ_USER_INFO_S    	stUserInfo;
+    //SWM_BIZ_USER_INFO_S    stUserInfo;
     /*本通道的网关信息*/
-    //SWM_BIZ_VT_INFO_S       stVtInfo;
+    SWM_BIZ_VT_INFO_S       stVtInfo;
     /*发送队列*/
     COM_IOBUF_QUE_S   *pstSwmSendQueue;
     /*ssl信息*/

@@ -74,6 +74,8 @@ struct tagVgmCtx
     ULONG                    ulInnerIfIndex;
     /*网关最多可以创建出64个家庭*/
     //VGM_FMINFO_CTX_S        *pstFmInfo[VGM_CTX_FMINFO_SIZE];
+    /*当前的所有连接数*/
+    ULONG                    ulConnNums;
 
 };
 
@@ -93,6 +95,12 @@ VGM_CTX_S *VGM_CFG_GetVTCtxByVTID(ULONG ulVtId);
 VOID    VGM_CFG_DelVTCtxByVTID(ULONG ulVtId);
 
 LONG    VGM_CFG_SetVTCtxByVTID(VGM_CTX_S *pstVgCtx, ULONG ulVtId);
+
+ULONG   VGM_CFG_GatewayConnGetNums(ULONG ulVtId);
+
+VOID    VGM_CFG_GatewayConnIncrement(ULONG ulVtId);
+
+VOID    VGM_CFG_GatewayConnDecrement(ULONG ulVtId);
 
 LONG    VGM_CFG_CtxInit();
 

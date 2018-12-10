@@ -49,7 +49,7 @@ VOID Swm_CtxMsgHandler(RCT_MSG_HEAD_S *pstHead, CHAR *pcMgtData, UINT32 uiLen)
     /*获取消息码*/
     ulMsgType = *((ULONG *)pcMgtData);
 
-    VOS_PRINT("SWM ctx handler msg type=%d!", ulMsgType);
+    //VOS_PRINT("SWM ctx handler msg type=%d!", ulMsgType);
    
     /*网关创建相关的消息*/
     switch(ulMsgType)

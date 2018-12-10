@@ -62,7 +62,6 @@ ULONG VGM_CFG_GetFreeVTID()
     return VOS_ERR;    
 }
 
-
 /*****************************************************************************
  函 数 名  : VGM_CFG_GetVTCtxByVTID
  功能描述  : 获取对应的VTID虚拟网关的上下文配置
@@ -158,6 +157,100 @@ LONG VGM_CFG_SetVTCtxByVTID(VGM_CTX_S *pstVgCtx, ULONG ulVtId)
     g_pstVgmCfgCtx->ulCurrentNums++;
 
     return VOS_OK;
+}
+
+
+
+/*****************************************************************************
+ 函 数 名  : VGM_CFG_GetCurrentConnNums
+ 功能描述  : 获取当前网关的连接数
+ 输入参数  : VGM_CTX_S *pstVgCtx  
+             ULONG ulVtId         
+ 输出参数  : 无
+ 返 回 值  : 
+ 调用函数  : 
+ 被调函数  : 
+ 
+ 修改历史      :
+  1.日    期   : 2018年12月6日
+    作    者   : jimk
+    修改内容   : 新生成函数
+
+*****************************************************************************/
+ULONG VGM_CFG_GatewayConnGetNums(ULONG ulVtId)
+{
+    if ( VGM_CFG_ARRAY_NUMS <= ulVtId)
+    {
+        return VOS_ERR;
+    }
+    
+    if(NULL ==  g_pstVgmCfgCtx->pastVgCfgArray[ulVtId] )
+    {
+        return VOS_ERR;
+    }
+    
+    return g_pstVgmCfgCtx->pastVgCfgArray[ulVtId]->ulConnNums;
+}
+
+/*****************************************************************************
+ 函 数 名  : VGM_CFG_GatewayConnIncrement
+ 功能描述  : 增加当前网关的连接统计数
+ 输入参数  : ULONG ulVtId  
+ 输出参数  : 无
+ 返 回 值  : 
+ 调用函数  : 
+ 被调函数  : 
+ 
+ 修改历史      :
+  1.日    期   : 2018年12月6日
+    作    者   : 蒋康
+    修改内容   : 新生成函数
+
+*****************************************************************************/
+VOID VGM_CFG_GatewayConnIncrement(ULONG ulVtId)
+{
+    if ( VGM_CFG_ARRAY_NUMS <= ulVtId)
+    {
+        return;
+    }
+    
+    if(NULL ==  g_pstVgmCfgCtx->pastVgCfgArray[ulVtId] )
+    {
+        return;
+    }
+    
+    VOS_InterlockedIncrement(&g_pstVgmCfgCtx->pastVgCfgArray[ulVtId]->ulConnNums);
+}
+
+
+/*****************************************************************************
+ 函 数 名  : VGM_CFG_GatewayConnDecrement
+ 功能描述  : 删除当前网关的连接统计数
+ 输入参数  : ULONG ulVtId  
+ 输出参数  : 无
+ 返 回 值  : 
+ 调用函数  : 
+ 被调函数  : 
+ 
+ 修改历史      :
+  1.日    期   : 2018年12月6日
+    作    者   : 蒋康
+    修改内容   : 新生成函数
+
+*****************************************************************************/
+VOID VGM_CFG_GatewayConnDecrement(ULONG ulVtId)
+{
+    if ( VGM_CFG_ARRAY_NUMS <= ulVtId)
+    {
+        return;
+    }
+    
+    if(NULL ==  g_pstVgmCfgCtx->pastVgCfgArray[ulVtId] )
+    {
+        return;
+    }
+    
+    VOS_InterlockedDecrement(&g_pstVgmCfgCtx->pastVgCfgArray[ulVtId]->ulConnNums);
 }
 
 

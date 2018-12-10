@@ -1,4 +1,5 @@
 #公共部分
+#CC=gcc
 CC=g++
 CFLAGS=-c 
 MAKE=make

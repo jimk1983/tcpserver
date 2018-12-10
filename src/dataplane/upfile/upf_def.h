@@ -63,7 +63,7 @@ typedef enum
 typedef struct tagUPFKVPInfo
 {
     CHAR        acDevLabel[UPF_DEVLAB_LEN];         /*设备标签*/
-    CHAR        acDevDecryptor[UPF_DEVLAB_LEN];     /*设备描述*/
+    CHAR        acDevDecptor[UPF_DEVLAB_LEN];       /*设备描述*/
     UINT32      uiDevStatusCode;                    /*设备状态码*/
     UINT32      uiTerminalStatusCode;               /*终端状态码*/
     UINT32      uiLastVersion;                      /*当前最新版本*/
@@ -135,6 +135,8 @@ struct tagUPFConn
 
     COM_IOBUF_S *               pstRcvIobuf;
 
+    
+    CHAR                        acTerminalID[UPF_DEVLAB_LEN];
     /*当前要发送的文件信息*/
     FSM_RENTRY_S                stFileEntryInfo;    
     

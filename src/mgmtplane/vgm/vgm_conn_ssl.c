@@ -72,7 +72,7 @@ LONG VGM_SSLConn_TLSDispatch(ULONG ulVtID, LONG lClientfd)
             stDstInfo.ulDstRctType = RCT_TYPE_DP_SSL;       
             stDstInfo.ulDstSubType = RCT_SUBTYPE_SSL_SWM;   //SSL有多种业务节点类型
             stDstInfo.ulDstPthIndex = ulPollIndex;
-                
+            
             /*循环的将对应的clientfd发送到负载轮询的线程中*/
             if ( VOS_ERR == SWM_MSG_AddTlsConn(&stDstInfo,lClientfd, ulVtID))
             {
@@ -281,7 +281,7 @@ VGM_SSL_LISTEN_CONN_S *VGM_SSLConn_ListenCreate(CHAR  *pcIpaddr,UINT32 uiPort)
         return NULL;
     }
     
-    VOS_Printf("vgm create the listen socket [%d] is ok!", pstListenConn->lListenSockfd);
+    VOS_Printf("vgm create the listen socket [%d] has exist!", pstListenConn->lListenSockfd);
 
     return pstListenConn;
 }
@@ -363,7 +363,6 @@ LONG VGM_SSLConn_VTCreate(USHORT usPort)
     
     VGM_SSLConn_CtxLockInit(&pstVgmCtx->stVTLocks);
     
-
     /*SSL监听节点初始化*/
     pstVgmCtx->pstSslListenConn = VGM_SSLConn_ListenCreate((CHAR *)VGM_DEFAULT_IPADDR, usPort);
     if ( NULL == pstVgmCtx->pstSslListenConn )

@@ -38,6 +38,7 @@ typedef enum
     RCT_TYPE_MP_CLI = 0,           /*定义管理面线程: 命令行*/
     RCT_TYPE_MP_AAA,               /*定义管理面线程: AAA类型*/
     RCT_TYPE_MP_PROXY,             /*定义管理面线程: DNS代理业务*/
+    RCT_TYPE_MP_RDS,               /*定义管理面线程: RDS代理业务*/
     RCT_TYPE_DP_TCP,               /*定义数据面线程: TCP类型*/
     RCT_TYPE_DP_SSL,               /*定义数据面线程: SSL类型*/
     RCT_TYPE_DP_UDPS,              /*定义数据面线程: UDPS类型*/

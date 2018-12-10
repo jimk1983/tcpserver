@@ -65,7 +65,7 @@ ULONG UPF_CtxBizMatch(SWM_BIZ_CHANNEL_S *pstBizChannel, CHAR *pcData, ULONG ulDa
             return EMPTO_BIZTYPEID_UNKNOW;
         }
         pstBizChannel->ulPipeNum++;
-        VOS_Printf("pfw biz type has been matched and create nem node OK!");
+        VOS_Printf("UPF biz type has been matched and create a new node successful!");
         return EMPTO_BIZTYPEID_UPF;
     }
     

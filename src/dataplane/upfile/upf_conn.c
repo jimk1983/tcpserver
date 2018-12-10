@@ -17,6 +17,7 @@
 
 ******************************************************************************/
 #include "common.h"
+#include "vgm/vgm_pub.h"
 #include "swm/swm_pub.h"
 #include "fsm/fsm_pub.h"
 #include "upfile/upf_pub.h"
@@ -89,8 +90,8 @@ LONG UPF_Conn_DelNotify(UPF_CONN_S *pstUpfConn)
         /*调用下一个节点, 通知所有删除*/
         if ( NULL != pstPipeNext->stPipeDelNotifyProc.pvcbFunc ) 
         {   
-            VOS_Printf("found the next pipe node, goto delnotify!pstPipeNode=%p,data=%p", 
-                pstPipeNext, pstPipeNext->stPipeDelNotifyProc.pvUserData);
+            //VOS_Printf("found the next pipe node, goto delnotify!pstPipeNode=%p,data=%p", 
+            //    pstPipeNext, pstPipeNext->stPipeDelNotifyProc.pvUserData);
             ((swm_pipe_delnotify_cb)pstPipeNext->stPipeDelNotifyProc.pvcbFunc)(pstPipeNext->stPipeDelNotifyProc.pvUserData);
         }
     }
@@ -131,17 +132,17 @@ LONG UPF_Conn_TransBufToDownPipeNode(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIob
     lRet = SWM_TLS_PipeTransBufToPrePipeNode(&pstUpfConn->stPipe, pstIobuf);
     if (SWM_PIPE_IOBUF_EWOULDBLOCK == lRet )
     { 
-        VOS_Printf("ewould block error!");
+        //VOS_Printf("upf down pipe data ewould block error, TerminalID=[%s]!", pstUpfConn->acTerminalID);
         return VOS_SYS_EWOULDBLOCK;
     }
     else if (SWM_PIPE_IOBUF_OK == lRet )
     {
-        VOS_Printf("UPF stastic flows!");
+        //VOS_Printf("UPF stastic flows!");
         return VOS_OK;
     }
     else
     {
-        VOS_Printf("Tls connect node pipe to next node error, notify all pipe goto expire!");
+        //VOS_Printf("Tls connect node pipe to next node error, notify all pipe goto expire!");
         UPF_Conn_DelNotify(pstUpfConn);
     }
     
@@ -209,7 +210,7 @@ LONG UPF_Conn_PipeConnDataUpperProc(VOID *pvhandler, COM_IOBUF_S *pstIobuf)
 *****************************************************************************/
 LONG UPF_Conn_PipeConnDataDownProc(VOID *pvhandler, COM_IOBUF_S *pstIobuf)
 {
-    UPF_CONN_S *pstConn = NULL;
+    //UPF_CONN_S *pstConn = NULL;
 
     if ( NULL == pvhandler 
         || NULL == pstIobuf )
@@ -218,9 +219,9 @@ LONG UPF_Conn_PipeConnDataDownProc(VOID *pvhandler, COM_IOBUF_S *pstIobuf)
         return VOS_ERR;
     }
 
-    pstConn = (UPF_CONN_S *)pvhandler;
+    //pstConn = (UPF_CONN_S *)pvhandler;
 
-    VOS_Printf("UPF_Conn_PipeConnDataDownProc Entry!pstConn=%p", pstConn);
+    //VOS_Printf("UPF_Conn_PipeConnDataDownProc Entry!pstConn=%p", pstConn);
     
    return VOS_OK;                         
 }
@@ -253,7 +254,7 @@ LONG UPF_Conn_PipeConnCtrlProc(VOID *pvhandler, ULONG ulCtrlCmd)
 
     pstConn = (UPF_CONN_S *)pvhandler;
     
-    VOS_Printf("UPF_Conn_PipeConnCtrlProc Entry! pstConn=%p", pstConn);
+    VOS_Printf("UPF_Conn_PipeConnCtrlProc: TerminalID=[%s], continue out!", pstConn->acTerminalID);
 
     /*如果已经进入老化，就不要再继续处理了*/
     if( VOS_TRUE == pstConn->pstBizChannel->ulExitConfirm )
@@ -311,7 +312,7 @@ VOID UPF_Conn_PipeConnDelNotifyProc(VOID *pvhandler)
 
     pstConn = (UPF_CONN_S *)pvhandler;
     
-    VOS_Printf("UPF_Conn_PipeConnDelNotifyProc Entry!");
+    //VOS_Printf("UPF_Conn_PipeConnDelNotifyProc Entry!");
     
     UPF_Conn_DelNotify(pstConn);
 
@@ -345,7 +346,7 @@ VOID UPF_Conn_ExpireCb(VOID *pstUpfConn)
 
     pstUPFConn =(UPF_CONN_S *)pstUpfConn;
     
-    VOS_Printf("UPF connect node goto expiring...!");
+    //VOS_Printf("UPF connect node goto expiring...!");
     
     if( VOS_TRUE != pstUPFConn->stExpireOps.ulExpireConfirm )
     {
@@ -422,7 +423,7 @@ LONG UPF_Conn_Create(SWM_BIZ_CHANNEL_S *pstBizChannel)
     pstConn->uiMgrChunkStatus = UPF_TRNSTATUS_SNDEND;
 
                 
-    VOS_Printf("UPF Conn Create OK");
+    //VOS_Printf("UPF Conn Create OK");
 
     return VOS_OK;
 }
@@ -444,15 +445,21 @@ LONG UPF_Conn_Create(SWM_BIZ_CHANNEL_S *pstBizChannel)
 *****************************************************************************/
 LONG UPF_Conn_Release(UPF_CONN_S *pstConn)
 {
+    ULONG   ulVtID = 0;
+
     if ( NULL == pstConn )
     {
         VOS_Printf("param error!");
         return VOS_ERR;
     }
     
-    VOS_Printf("UPF Connect Release Entry!");
-    
     pstConn->pstBizChannel->ulExitConfirm  = VOS_TRUE;
+
+    ulVtID = pstConn->pstBizChannel->stVtInfo.ulVTID;
+    
+    VOS_Printf("UPF Connect Release Entry! TerminalID=[%s], CurrConnNums=%d", 
+                    pstConn->acTerminalID, 
+                    VGM_CFG_GatewayConnGetNums(ulVtID));
 
     /*重要: BizChannel 中脱离本节点*/
     VOS_DLIST_DEL(&pstConn->stPipe.stNode);

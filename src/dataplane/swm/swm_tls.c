@@ -18,6 +18,7 @@
 ******************************************************************************/
     
 #include "common.h"
+#include "vgm/vgm_pub.h"
 #include "swm/swm_pub.h"
 
 
@@ -76,7 +77,7 @@ VOID SWM_TLS_ConnDelNotify(SWM_TLS_CONN_S *pstTlsConn)
         return;
     }
 
-    VOS_Printf("SWM_TLS_ConnDelNotify Entry, fd=%d, pstConn=%p", pstTlsConn->lConnfd, pstTlsConn);
+    //VOS_Printf("SWM_TLS_ConnDelNotify Entry, fd=%d, pstConn=%p", pstTlsConn->lConnfd, pstTlsConn);
     
     /*需要第一时间先删除该注册网络事件,
     关闭内核产生的大量错误的网络事件
@@ -120,8 +121,8 @@ VOID SWM_TLS_ConnDelNotify(SWM_TLS_CONN_S *pstTlsConn)
         /*调用下一个节点, 通知所有删除*/
         if ( NULL != pstPipeNext->stPipeDelNotifyProc.pvcbFunc ) 
         {   
-            VOS_Printf("found the next pipe node, Goto Delnotify!pstPipeNode=%p,data=%p", 
-                pstPipeNext, pstPipeNext->stPipeDelNotifyProc.pvUserData);
+            //VOS_Printf("found the next pipe node, Goto Delnotify!pstPipeNode=%p,data=%p", 
+            //    pstPipeNext, pstPipeNext->stPipeDelNotifyProc.pvUserData);
             ((swm_pipe_delnotify_cb)pstPipeNext->stPipeDelNotifyProc.pvcbFunc)(pstPipeNext->stPipeDelNotifyProc.pvUserData);
         }
     }
@@ -171,7 +172,7 @@ VOID SWM_TLS_ConnRecvCb(VOID *pvTlsConn)
         return;
     }
 
-    VOS_Printf("SWM_TLS_ConnRecvCb recvfd=%d", pstTlsConn->lConnfd);
+    //VOS_Printf("SWM_TLS_ConnRecvCb recvfd=%d", pstTlsConn->lConnfd);
     
     /*这里会重新创建一个iobuf,
        iobuf就随着管道一级一级的往后推送处理, 最后一个需要释放*/
@@ -197,7 +198,7 @@ VOID SWM_TLS_ConnRecvCb(VOID *pvTlsConn)
         return;
     }
 
-    VOS_Printf("swm tls conn recv cb entry, connfd=%d!", pstTlsConn->lConnfd);
+    //VOS_Printf("swm tls conn recv cb entry, connfd=%d!", pstTlsConn->lConnfd);
     
     /*读取数据*/
     //lError = UTL_SSL_Read(pstTlsConn->pstSsl, pcData, lRecvLen, &lErrorStatus);
@@ -296,7 +297,7 @@ VOID SWM_TLS_ConnRecvCb(VOID *pvTlsConn)
             VOS_Printf("swm biz type is unknow!");
             return;
         }
-        VOS_Printf("swm biz type is[%d], start match the bizchannel", pstBizChannel->ulBizType);
+        //VOS_Printf("swm biz type is[%d], start match the bizchannel", pstBizChannel->ulBizType);
     }
 
     /*将接收到的Iobuf 推送给下一个节点 */
@@ -306,7 +307,7 @@ VOID SWM_TLS_ConnRecvCb(VOID *pvTlsConn)
         case SWM_PIPE_IOBUF_OK:
             /*这种都表示推送成功*/
             /*TODO: 统计流量*/
-            VOS_Printf("Tls connect node pipe to next node ok!!");
+            //VOS_Printf("Tls connect node pipe to next node ok!!");
             /*本接收指针需要重新赋值为空*/
             pstTlsConn->pstRecvIobuf = NULL;
             break;
@@ -365,18 +366,18 @@ VOID SWM_TLS_ConnSendCb(VOID *pvTlsConn)
     
     pstTlsConn = (SWM_TLS_CONN_S *)pvTlsConn;
 
-    VOS_Printf("SWM_TLS_ConnSendCb Entry, pstConn=%p, fd=%d", pstTlsConn, pstTlsConn->lConnfd);
+    //VOS_Printf("SWM_TLS_ConnSendCb Entry, pstConn=%p, fd=%d", pstTlsConn, pstTlsConn->lConnfd);
     
     
     /*先看看队列是不是空的,如果是空的，则关闭发送*/
     if ( VOS_TRUE == COM_Iobuf_QueIsEmpty(pstTlsConn->pstBizChannel->pstSwmSendQueue))
     {   
+        //VOS_Printf("SWM_TLS_ConnSendCb Entry, pstConn=%p, fd=%d", pstTlsConn, pstTlsConn->lConnfd);
         /*先关闭发送*/
         (VOID)RCT_API_NetOpsEventCtrl(&pstTlsConn->stNetEvtOps, VOS_EPOLL_CTRL_OUTCLOSE);
-
+        
         /*通知上一级已经完成了发送的情况*/
         (VOID)SWM_TLS_PipeTransCtrlToNextPipeNode(&pstTlsConn->stTlsPipe, SWM_CTRLCMD_SNDOUT_COMPELETED);
-        
         return;
     }
     
@@ -389,6 +390,13 @@ VOID SWM_TLS_ConnSendCb(VOID *pvTlsConn)
 
     /*发送队列的数目，不为空肯定是>0*/
     ulNums = COM_Iobuf_QueGetNums(pstTlsConn->pstBizChannel->pstSwmSendQueue);
+    
+    if ( SWM_PIPE_IOBUF_THLD_LOW >= ulNums )
+    {
+        //VOS_Printf("Tls send iobuf level low threshold, ulNums=%d!", ulNums);
+        /*通知上一级已经完成了发送的情况*/
+        (VOID)SWM_TLS_PipeTransCtrlToNextPipeNode(&pstTlsConn->stTlsPipe, SWM_CTRLCMD_SNDOUT_COMPELETED);
+    }
             
     for(ulIndex = 0; ulIndex < ulNums; ulIndex++)
     {
@@ -436,10 +444,10 @@ SendAgain:
             //if ( VOS_SOCK_SSL_EWOULDBLOCK == lErrorStatus )
             if ( VOS_SOCK_EWOULDBLOCK == lErrorStatus )
             {
-                VOS_Printf("UTL_SSL_Write EWOULDBLOCK!");
+                //VOS_Printf("UTL_SSL_Write EWOULDBLOCK!");
                 if ( pstTlsConn->pstBizChannel->ulSndBlockCount >= SWM_SNDBLOCK_MAXNUMS )
                 {
-                    VOS_Printf("Send ewould block error!count=%d\n",pstTlsConn->pstBizChannel->ulSndBlockCount );
+                    VOS_Printf("Send ewould block error! count=%d\n",pstTlsConn->pstBizChannel->ulSndBlockCount );
                     SWM_TLS_ConnDelNotify(pstTlsConn);
                 }
                 pstTlsConn->pstBizChannel->ulSndBlockCount++;
@@ -516,8 +524,8 @@ VOID SWM_TLS_ConnExpireCb(VOID *pvTlsConn)
 
     pstTlsConn = (SWM_TLS_CONN_S *)pvTlsConn;
     
-    VOS_Printf("SWM_TLS_ConnExpireCb fd[%d]:confirm=%d!", 
-                pstTlsConn->lConnfd,pstTlsConn->stExpireOps.ulExpireConfirm);
+    //VOS_Printf("SWM_TLS_ConnExpireCb fd[%d]:confirm=%d!", 
+    //            pstTlsConn->lConnfd,pstTlsConn->stExpireOps.ulExpireConfirm);
         
     /*老化节点的规则:
        1. 下面的ulExpireConfirm只能在DelNotify中设置
@@ -560,7 +568,7 @@ VOID SWM_TLS_ConnExpireCb(VOID *pvTlsConn)
 LONG SWM_TLS_ConnCreate(SWM_MSG_ADDCONN_S *pstMsgInfo)
 {
     SWM_TLS_CONN_S *pstTlsConn      = NULL;
-    
+    ULONG           ulVtID          = 0;
 
     if ( NULL == pstMsgInfo )
     {
@@ -568,6 +576,7 @@ LONG SWM_TLS_ConnCreate(SWM_MSG_ADDCONN_S *pstMsgInfo)
         return VOS_ERR;
     }
 
+    ulVtID = pstMsgInfo->ulVtID;
     
     /*申请TLS节点内存*/
     pstTlsConn = (SWM_TLS_CONN_S *)VOS_Malloc(SWM_MID_SID_TLS, sizeof(SWM_TLS_CONN_S));
@@ -585,7 +594,6 @@ LONG SWM_TLS_ConnCreate(SWM_MSG_ADDCONN_S *pstMsgInfo)
     pstTlsConn->lConnfd         = pstMsgInfo->lConnfd;
     pstTlsConn->lHandShakeStatus = SWM_TLS_SSL_STATUS_INIT;
     
-
     if(VOS_ERR == VOS_SOCK_SetOption(pstMsgInfo->lConnfd))
     {
         VOS_Printf("VOS_SOCK_SetOption() error!");
@@ -631,6 +639,8 @@ LONG SWM_TLS_ConnCreate(SWM_MSG_ADDCONN_S *pstMsgInfo)
         return VOS_ERR;
     }
     
+    pstTlsConn->pstBizChannel->stVtInfo.ulVTID = ulVtID;
+    
     if ( VOS_ERR == SWM_TLS_PipeConnCreate(pstTlsConn) )
     {
         VOS_Printf("swm pipe conn create error!");
@@ -642,7 +652,10 @@ LONG SWM_TLS_ConnCreate(SWM_MSG_ADDCONN_S *pstMsgInfo)
         return VOS_ERR;
     }
 
-    VOS_Printf("New tls connect node create OK!sockfd=%d, pstTlsConn=%p", pstTlsConn->lConnfd, pstTlsConn);
+    VGM_CFG_GatewayConnIncrement(ulVtID);
+
+    VOS_Printf("New TLS connect node create OK!sockfd=%d, Vt-ConnNums=%d",
+        pstTlsConn->lConnfd, VGM_CFG_GatewayConnGetNums(ulVtID));
     
     return VOS_OK;
 }
@@ -666,13 +679,17 @@ LONG SWM_TLS_ConnCreate(SWM_MSG_ADDCONN_S *pstMsgInfo)
 *****************************************************************************/
 LONG SWM_TLS_ConnRelease(SWM_TLS_CONN_S *pstTlsConn)
 {
+    ULONG ulVtID = 0;
+    
     if ( NULL == pstTlsConn )
     {
         VOS_Printf("param error!");
         return VOS_ERR;
     }
 
-    VOS_Printf("SWM_TLS_ConnRelease start!fd=[%d]", pstTlsConn->lConnfd);
+    ulVtID = pstTlsConn->pstBizChannel->stVtInfo.ulVTID;
+    
+    VGM_CFG_GatewayConnDecrement(ulVtID);
     
     /* 将网络去注册放在DelNotify中,快速关闭，否则会产生大量的0错误事件*/
     if(VOS_ERR == RCT_API_NetOpsEventUnRegister(&pstTlsConn->stNetEvtOps) )
