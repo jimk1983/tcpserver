@@ -22,11 +22,12 @@
 #include "common.h"
 #include "init.h"
 /*管理面*/
-#include "vgm/vgm_ctx.h"
-#include "fsm/fsm_ctx.h"
+#include "vgm/vgm_pub.h"
+#include "fsm/fsm_pub.h"
+#include "rds/rds_pub.h"
 /*业务面*/
-#include "swm/swm_ctx.h"
-#include "upfile/upf_ctx.h"
+#include "swm/swm_pub.h"
+#include "upfile/upf_pub.h"
 
 
 /*****************************************************************************
@@ -60,13 +61,20 @@ INT32 Main_EnvInit()
         return VOS_ERR;
     }
 
-    /*文件资源服务器*/
+    /*文件资源管理*/
     if ( VOS_ERR == FSM_CtxInit() )
     {  
         Main_EnvUnInit();
         return VOS_ERR;
     }
-    
+
+    /*Redis服务器*/
+    if ( VOS_ERR == RDS_CtxInit() )
+    {  
+        Main_EnvUnInit();
+        return VOS_ERR;
+    }
+        
     /********业务面**********/
     /*1. SWM业务初始化*/
     if ( VOS_ERR == SWM_CtxInit() )
@@ -105,6 +113,8 @@ VOID Main_EnvUnInit()
 {
     VGM_CtxUnInit();
     SWM_CtxUnInit();
+    FSM_CtxUnInit();
+    RDS_CtxUnInit();
     UPF_CtxUnInit();
     RCT_API_EnvUnInit();
 }

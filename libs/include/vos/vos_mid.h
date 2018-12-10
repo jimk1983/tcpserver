@@ -150,3 +150,9 @@
 #define VSNAT_MID_SID_MSG               VSNAT_MID_SID_SET(0x0002)          
 
 
+/*RDS模块*/
+#define RDS_MID                                0x100C0000
+#define RDS_MID_SID_SET(SID)         (RDS_MID  | SID )           
+#define RDS_MID_INI                         RDS_MID_SID_SET(0x01)             /*0x00010001--表示INI模块使用的内存*/
+#define RDS_MID_MSG                         RDS_MID_SID_SET(0x02)   
+

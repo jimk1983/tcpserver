@@ -21,6 +21,7 @@
 #include "common.h"
 #include "swm/swm_pub.h"
 #include "fsm/fsm_pub.h"
+#include "rds/rds_pub.h"
 #include "upfile/upf_pub.h"
 
 
@@ -255,9 +256,10 @@ INT32 UPF_Ctrl_Handler(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIobuf)
                 pstKvpInfo->acDevLabel, 
                 VOS_ntohl(pstKvpInfo->uiLastVersion),
                 pstKvpInfo->acDevDecptor);
-            if ( '\0' == pstUpfConn->acTerminalID[0]  )
+            
+            if ( '\0' == pstUpfConn->pstBizChannel->stClientInfo.acTerminalID[0]  )
             {
-                VOS_StrCpy_S(pstUpfConn->acTerminalID, UPF_DEVLAB_LEN-1, pstKvpInfo->acDevLabel);
+                VOS_StrCpy_S(pstUpfConn->pstBizChannel->stClientInfo.acTerminalID, SHARE_COMM_DEVLEN-1, pstKvpInfo->acDevLabel);
             }
 
             pstFileInfo = FSM_Conf_GetFileInfo(FSM_CONF_FILE_XML);
@@ -285,7 +287,7 @@ INT32 UPF_Ctrl_Handler(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIobuf)
             }
 
             VOS_Mem_Zero(pstKvpInfo->acFileValue, UPF_FILEVALEN);
-            VOS_StrCpy_S(pstKvpInfo->acFileValue, UPF_FILEVALEN, pstFileInfo->stFileInfo.stFileResInfo.acFileCRCVal);
+            VOS_StrCpy_S(pstKvpInfo->acFileValue, UPF_FILEVALEN-1, pstFileInfo->stFileInfo.stFileResInfo.acFileCRCVal);
             
             pstUpfHead->uiCtrlCode      = VOS_htonl(UPSER_CTLCODE_KPVINFO_RESP);            
             lRet = UPF_Conn_TransBufToDownPipeNode(pstUpfConn, pstIobuf);
@@ -294,6 +296,21 @@ INT32 UPF_Ctrl_Handler(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIobuf)
                 VOS_Printf("pipe down iobuf error!");
                 return VOS_ERR;
             }
+
+            if ( 0 == pstUpfConn->uiRdsRegted )
+            {
+                /*给Redis发送终端的相关信息*/
+                if ( VOS_ERR == RDS_MSG_TerminalInfoAdd( pstKvpInfo->acDevLabel,
+                                                         pstKvpInfo->acDevDecptor,
+                                                         pstUpfConn->pstBizChannel->stClientInfo.ulClientAddr,
+                                                         pstUpfConn->pstBizChannel->stClientInfo.ulClientPort)  )
+                {
+                    VOS_Printf("send to redis server info error!");
+                    return VOS_ERR;
+                }
+                pstUpfConn->uiRdsRegted = 1;
+            }
+            
         }
         break;
         

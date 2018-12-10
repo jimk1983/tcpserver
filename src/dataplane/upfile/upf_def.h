@@ -34,6 +34,7 @@ typedef  enum
     UPSER_CTLCODE_NUMS
 }UPSER_CTLCODE_E;
 
+
 /*设备标签长度*/
 #define UPF_DEVLAB_LEN      64
 #define UPF_FILELEN         32
@@ -134,12 +135,13 @@ struct tagUPFConn
     RCT_EXPIROPT_EVENT_S        stExpireOps;
 
     COM_IOBUF_S *               pstRcvIobuf;
-
     
-    CHAR                        acTerminalID[UPF_DEVLAB_LEN];
     /*当前要发送的文件信息*/
     FSM_RENTRY_S                stFileEntryInfo;    
-    
+
+    /*是否已经在Redis服务器上注册*/
+    UINT32                      uiRdsRegted;
+   
     /*当前传输的控制码*/
     UINT32                      uiUpfCtrlCode;
     /*文件片发送状态*/

@@ -17,4 +17,35 @@
 
 ******************************************************************************/
 
+/*定义RDS数组的最大数量*/
+#define RDS_ARRY_NUMS   8
+
+typedef enum
+{
+    RDS_LBALGM_TYPE_LEASTCONN = 0,  /*最小连接数*/
+    
+    RDS_LBALGM_TYPE_NUMS
+}RDS_LBALGM_TYPE_E;
+
+/*RDS的连接信息*/
+typedef struct tagRdsConnInfo
+{
+    CHAR acSevAddr[VOS_IPV4ADDR_STRLEN];    /*redis的服务器地址*/
+    CHAR acSevPort[VOS_IPV4ADDR_STRLEN];    /*redis的服务器端口*/
+   
+}RDS_CONN_INFO_S, *PRDS_CONN_INFO_S;
+
+/*RDS的上下文信息*/
+typedef struct tagRdsCtx
+{
+    RDS_CONN_INFO_S     stArryRDSConn[RDS_ARRY_NUMS];   /*RDS数组*/
+    ULONG               ulNums;                         /*当前数量*/
+    RDS_LBALGM_TYPE_E   eRdsLBAlgmType;                 /*负载均衡算法*/
+}RDS_CTX_S, *PRDS_CTX_S;
+
+LONG RDS_CtxInit();
+
+VOID RDS_CtxUnInit();
+
+
 

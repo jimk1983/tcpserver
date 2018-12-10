@@ -47,7 +47,8 @@ typedef struct tagSWMBizClientInfo
     UINT32   ulClientAddr;
     /*客户端端口*/
     UINT32   ulClientPort;
-
+    /*终端ID信息*/
+    CHAR     acTerminalID[SHARE_COMM_DEVLEN];
 }SWM_BIZ_CLIENT_INFO_S;
 
 

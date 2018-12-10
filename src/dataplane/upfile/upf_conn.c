@@ -20,6 +20,7 @@
 #include "vgm/vgm_pub.h"
 #include "swm/swm_pub.h"
 #include "fsm/fsm_pub.h"
+#include "rds/rds_pub.h"
 #include "upfile/upf_pub.h"
 
 
@@ -420,9 +421,9 @@ LONG UPF_Conn_Create(SWM_BIZ_CHANNEL_S *pstBizChannel)
         return VOS_ERR;
     } 
 
+    pstConn->uiRdsRegted = 0;
     pstConn->uiMgrChunkStatus = UPF_TRNSTATUS_SNDEND;
-
-                
+            
     //VOS_Printf("UPF Conn Create OK");
 
     return VOS_OK;
@@ -458,8 +459,13 @@ LONG UPF_Conn_Release(UPF_CONN_S *pstConn)
     ulVtID = pstConn->pstBizChannel->stVtInfo.ulVTID;
     
     VOS_Printf("UPF Connect Release Entry! TerminalID=[%s], CurrConnNums=%d", 
-                    pstConn->acTerminalID, 
+                    pstConn->pstBizChannel->stClientInfo.acTerminalID, 
                     VGM_CFG_GatewayConnGetNums(ulVtID));
+    
+    if( VOS_ERR == RDS_MSG_TerminalInfoDel(pstConn->pstBizChannel->stClientInfo.acTerminalID) )
+    {
+        VOS_Printf("Redis terminal info delete error, terminalID=%s", pstConn->pstBizChannel->stClientInfo.acTerminalID);
+    }
 
     /*重要: BizChannel 中脱离本节点*/
     VOS_DLIST_DEL(&pstConn->stPipe.stNode);
