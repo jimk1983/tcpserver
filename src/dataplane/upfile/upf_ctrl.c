@@ -106,6 +106,10 @@ LONG UFP_Ctrl_MakePacketDataResponse(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstOut
     uiLoadLen = sizeof(UPF_HEAD_S) + sizeof(UPF_FILEDATA_RESP_S);
     pstBizHead->uiDataLen = VOS_htonl(uiLoadLen);
     COM_IOBUF_SETINPUTED_LEN(pstOutIobuf, sizeof(UPF_FILEDATA_RESP_S));
+
+    //VOS_Printf("UFP_Ctrl_MakePacketDataResponse: FileSize=%d, fileName=%s", 
+    //                pstUpfConn->stFileEntryInfo.stFileResInfo.uiFileSize, 
+    //                pstData->acFileName);
     
     return VOS_OK;
 }
@@ -179,7 +183,7 @@ INT32 UPF_Ctrl_PipeDownData(UPF_CONN_S *pstUpfConn)
         /*Ë®Î»¿ØÖÆ*/
         if ( VOS_SYS_EWOULDBLOCK == lRet)
         {   
-            VOS_Printf("updata file transfer down EwouldBlocked!");
+            //VOS_Printf("updata file transfer down EwouldBlocked!");
             break;
         }
 
@@ -337,7 +341,7 @@ INT32 UPF_Ctrl_Handler(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIobuf)
             {
                 return VOS_ERR;
             }
-
+            
             pstUpfConn->uiMgrChunkStartIndex    = VOS_htonl(pstFileReq->uiChunkStart);
             pstUpfConn->uiMgrChunkNums          = pstFileInfo->uiIoBufNums;
             pstUpfConn->uiMgrChunkCount         = 0;

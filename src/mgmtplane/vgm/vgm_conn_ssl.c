@@ -126,7 +126,7 @@ VOID VGM_SSLConn_AcceptCb(VOID *pvHandler)
         return;
     }
     
-    VOS_Printf("vgm listen accept Entry!");
+    //VOS_Printf("vgm listen accept Entry!");
 
     pstListenConn = (VGM_SSL_LISTEN_CONN_S *)pvHandler;
 

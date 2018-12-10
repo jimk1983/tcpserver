@@ -234,7 +234,7 @@ VOID SWM_TLS_ConnRecvCb(VOID *pvTlsConn)
     }
     else if ( 0 == lError )
     {
-        VOS_Printf("UTL_SSL_Read ret = 0!");
+        //VOS_Printf("UTL_SSL_Read ret = 0!");
 
         /*可能已经产生了下一个节点，需要通知方式删除*/
         SWM_TLS_ConnDelNotify(pstTlsConn);
@@ -246,7 +246,7 @@ VOID SWM_TLS_ConnRecvCb(VOID *pvTlsConn)
          if ( 1 == lError )
          {
              /* 接收到1个字节,还得继续接收 */
-             VOS_Printf("UTL_SSL_Read must be continue!");
+             //VOS_Printf("UTL_SSL_Read must be continue!");
              /*设置接收到更新的长度*/
              COM_IOBUF_SETINPUTED_LEN(pstTlsConn->pstRecvIobuf, (ULONG)lError);
              return;
@@ -384,7 +384,7 @@ VOID SWM_TLS_ConnSendCb(VOID *pvTlsConn)
     /*上一次还没有发完，需要继续发送*/
     if ( NULL != pstTlsConn->pstSendIobuf )
     {
-        VOS_Printf("Tls send iobuf is not empty , must be send again!");
+        //VOS_Printf("Tls send iobuf is not empty , must be send again!");
         goto SendAgain;
     }
 

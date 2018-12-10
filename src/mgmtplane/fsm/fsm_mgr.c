@@ -215,13 +215,16 @@ FSM_FILE_INFO_S *FSM_MgrFileInfoCreate(CHAR *pcFileDir, UINT32 uiFileType)
 
     pstFileInfo->stFileInfo.stFileResInfo.uiFileSize = uiFileSize;
     pstFileInfo->stFileInfo.stFileResInfo.uiFileType = uiFileType;
-    
     if ( VOS_ERR == FSM_MgrFileSpliceCreate(pstFileInfo) )
     {
         free(pstFileInfo->pucFileContent);
         free(pstFileInfo);
         return NULL;
     }
+
+    VOS_Printf("File Splice create successful! filesize=%d, fileName=%s\n", 
+                pstFileInfo->stFileInfo.stFileResInfo.uiFileSize,
+                pstFileInfo->stFileInfo.acFullName);
 
     MD5_ValToString_s(aucDigest, FSM_VAL_LEN, (UCHAR *)pstFileInfo->stFileInfo.stFileResInfo.acFileCRCVal);
     
