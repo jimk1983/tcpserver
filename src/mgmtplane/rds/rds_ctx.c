@@ -66,6 +66,7 @@ VOID RDS_CtxMsgHandler(RCT_MSG_HEAD_S *pstHead, CHAR *pcMgtData, UINT32 uiLen)
                 VOS_StrCpy_S((CHAR *)stTmInfo.acTerminalID, REDIS_TERMAL_STRLEN-1, (CHAR *)pstMsg->acTerminalID);
                 VOS_StrCpy_S((CHAR *)stTmInfo.acTerminalDesptor, REDIS_TERMAL_STRLEN-1, (CHAR *)pstMsg->acTerminalDecptor);
                 VOS_NToIPV4Str(pstMsg->uiClientAddr, (CHAR *)stTmInfo.acTerminalPubAddr);
+                stTmInfo.uiTerminalPubPort = pstMsg->uiClientPort;
                 
                 if ( VOS_ERR == REDIS_API_TerminalInfoSet(g_pstRdsCtx->stArryRDSConn[0].pstRdsConn, &stTmInfo) )
                 {
