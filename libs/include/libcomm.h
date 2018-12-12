@@ -20,7 +20,7 @@
 #include "vos/vos_pub.h"
 #include "rct/rct_def.h"
 #include "rct/rct_api.h"
-
+#include "RedisLibApi.h"
 
 
 

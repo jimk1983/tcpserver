@@ -25,7 +25,7 @@ CFLAGS+=-I$(ROOTDIR)/libs/include
 CFLAGS+=-I$(ROOTDIR)/libs/include/vos
 CFLAGS+=-I$(ROOTDIR)/libs/include/rct
 
-LIFLAGS=-L$(ROOTDIR)/libs/bin -lrct -lvos  
+LIFLAGS=-L$(ROOTDIR)/libs/bin -lrct -lvos  -lredisclient -lhiredis
 
 #LSFLAGS +=
 

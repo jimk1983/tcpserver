@@ -273,6 +273,7 @@ INT32 UPF_Ctrl_Handler(UPF_CONN_S *pstUpfConn, COM_IOBUF_S *pstIobuf)
             pstKvpInfo->uiIntervalRate  = VOS_htonl(UPF_KEEPALIVE_RATEVAL);
             pstKvpInfo->uiFileSize      = VOS_htonl(pstFileInfo->stFileInfo.stFileResInfo.uiFileSize);
             pstKvpInfo->usCmdCode       = VOS_htons(UPDEV_CMDCODE_UPDATA_FORCE);
+            pstKvpInfo->uiConnNums      = VOS_htons(UPDEV_CMDCODE_UPDATA_FORCE);
 
             if( VOS_ERR == FSM_Conf_GetServerAddrInfo(pstKvpInfo->acAddrInfo, UPF_FILELEN))
             {

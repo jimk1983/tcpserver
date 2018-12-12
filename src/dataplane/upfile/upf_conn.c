@@ -379,8 +379,8 @@ VOID UPF_Conn_ExpireCb(VOID *pstUpfConn)
 *****************************************************************************/
 LONG UPF_Conn_Create(SWM_BIZ_CHANNEL_S *pstBizChannel)
 {
-    UPF_CONN_S *pstConn = NULL;
-
+    UPF_CONN_S*         pstConn     = NULL;
+    
     if ( NULL == pstBizChannel )
     {
         VOS_Printf("param error!");
@@ -423,9 +423,7 @@ LONG UPF_Conn_Create(SWM_BIZ_CHANNEL_S *pstBizChannel)
 
     pstConn->uiRdsRegted = 0;
     pstConn->uiMgrChunkStatus = UPF_TRNSTATUS_SNDEND;
-            
-    //VOS_Printf("UPF Conn Create OK");
-
+    
     return VOS_OK;
 }
 
@@ -457,6 +455,16 @@ LONG UPF_Conn_Release(UPF_CONN_S *pstConn)
     pstConn->pstBizChannel->ulExitConfirm  = VOS_TRUE;
 
     ulVtID = pstConn->pstBizChannel->stVtInfo.ulVTID;
+
+    /*是否为保活注册节点*/
+    if ( 1 == pstConn->uiRdsRegted  )
+    {
+        if ( VOS_ERR == RDS_MSG_TerminalInfoOffline(pstConn->pstBizChannel->stClientInfo.acTerminalID)  )
+        {
+            VOS_Printf("send offline message to redis module error!");
+            return VOS_ERR;
+        }
+    }
     
     VOS_Printf("UPF Connect Release Entry! TerminalID=[%s], CurrConnNums=%d", 
                     pstConn->pstBizChannel->stClientInfo.acTerminalID, 

@@ -41,7 +41,9 @@ PRDS_CTX_S g_pstRdsCtx = NULL;
 *****************************************************************************/
 VOID RDS_CtxMsgHandler(RCT_MSG_HEAD_S *pstHead, CHAR *pcMgtData, UINT32 uiLen)
 {
-    ULONG   ulMsgType = RDS_MSGTYPE_UNKNOW;
+    ULONG               ulMsgType   = RDS_MSGTYPE_UNKNOW;
+    REDIS_TERMAL_INFO_S stTmInfo    = {0} ;
+    
     if ( NULL == pstHead
         || NULL == pcMgtData)
     {
@@ -52,22 +54,45 @@ VOID RDS_CtxMsgHandler(RCT_MSG_HEAD_S *pstHead, CHAR *pcMgtData, UINT32 uiLen)
     /*获取消息码*/
     ulMsgType = *((ULONG *)pcMgtData);
         
-   VOS_Printf("Redis message handler: message type=%d", ulMsgType);
+    VOS_Printf("Redis message handler: message type=%d", ulMsgType);
    
     /*网关创建相关的消息*/
     switch(ulMsgType)
-   {
+    {
         case RDS_MSGTYPE_TerminalInfoAdd:
             {
                 PRDS_MSG_TMINFOADD_S pstMsg = (PRDS_MSG_TMINFOADD_S)pcMgtData;
-                VOS_Printf("Redis message: TerminalID=%s", pstMsg->acTerminalID);
+
+                VOS_StrCpy_S((CHAR *)stTmInfo.acTerminalID, REDIS_TERMAL_STRLEN-1, (CHAR *)pstMsg->acTerminalID);
+                VOS_StrCpy_S((CHAR *)stTmInfo.acTerminalDesptor, REDIS_TERMAL_STRLEN-1, (CHAR *)pstMsg->acTerminalDecptor);
+                VOS_NToIPV4Str(pstMsg->uiClientAddr, (CHAR *)stTmInfo.acTerminalPubAddr);
+                
+                if ( VOS_ERR == REDIS_API_TerminalInfoSet(g_pstRdsCtx->stArryRDSConn[0].pstRdsConn, &stTmInfo) )
+                {
+                   VOS_Printf("Redis tminfo set error: Add TerminalID=%s", pstMsg->acTerminalID);
+                }
             }
             break;
         case RDS_MSGTYPE_TerminalInfoDel:
-            
+            {
+                PRDS_MSG_TMINFOADD_S pstMsg = (PRDS_MSG_TMINFOADD_S)pcMgtData;
+                VOS_Printf("Redis message: Del TerminalID=%s", pstMsg->acTerminalID);
+            }
             break;
         case RDS_MSGTYPE_TerminalInfoUpdate:
-            
+            {
+
+            }
+            break;
+        case RDS_MSGTYPE_TerminalInfoOffline:
+            {
+                PRDS_MSG_TMINFOADD_S pstMsg = (PRDS_MSG_TMINFOADD_S)pcMgtData;
+                
+                if ( VOS_ERR == REDIS_API_TerminalInfoSetStatus(g_pstRdsCtx->stArryRDSConn[0].pstRdsConn, (UCHAR *)pstMsg->acTerminalID, 0) )
+                {
+                   VOS_Printf("Redis tminfo set error: Add TerminalID=%s", pstMsg->acTerminalID);
+                }
+            }
             break;
         case RDS_MSGTYPE_RedisServerAdd:
             
@@ -153,9 +178,28 @@ LONG RDS_CtxInit()
     }
     memset(g_pstRdsCtx, 0, sizeof(RDS_CTX_S));
 
+    /*默认初始化当前的Redis服务器*/
+    VOS_StrCpy_S(g_pstRdsCtx->stArryRDSConn[0].acSevAddr, VOS_IPV4ADDR_STRLEN-1, VOS_SOCK_LOCALHOST_STR);
+
+    g_pstRdsCtx->stArryRDSConn[0].iSevPort = RDS_SERVER_PORT;
+    
+    g_pstRdsCtx->stArryRDSConn[0].pstRdsConn = REDIS_API_ConnCreate(g_pstRdsCtx->stArryRDSConn[0].acSevAddr,
+                                                                    g_pstRdsCtx->stArryRDSConn[0].iSevPort,
+                                                                    NULL);
+    if ( NULL == g_pstRdsCtx->stArryRDSConn[0].pstRdsConn )
+    {
+        VOS_Printf("RDS connection create error!");
+        free(g_pstRdsCtx);
+        g_pstRdsCtx = NULL;
+        return VOS_ERR;
+    }
+    
     if ( VOS_ERR == RCT_API_EnvTaskInitRegister(RDS_CtxTaskInit, NULL, RCT_TYPE_MP_RDS,RCT_SUBTYPE_SINGLE, RDS_CtxTaskUnInit) )
     {
-        VOS_Printf("RDS ctx init register error!!");
+        VOS_Printf("RDS ctx init register error!");
+        REDIS_API_ConnRelease(&g_pstRdsCtx->stArryRDSConn[0].pstRdsConn);
+        free(g_pstRdsCtx);
+        g_pstRdsCtx = NULL;
         return VOS_ERR;
     }
     
@@ -184,6 +228,10 @@ VOID RDS_CtxUnInit()
     
     if ( NULL != g_pstRdsCtx )
     {
+        if ( NULL != g_pstRdsCtx->stArryRDSConn[0].pstRdsConn )
+        {
+            REDIS_API_ConnRelease(&g_pstRdsCtx->stArryRDSConn[0].pstRdsConn);
+        }
         free(g_pstRdsCtx);
         g_pstRdsCtx = NULL;
     }

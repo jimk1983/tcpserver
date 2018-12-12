@@ -20,6 +20,9 @@
 /*定义RDS数组的最大数量*/
 #define RDS_ARRY_NUMS   8
 
+/*默认的Redis的服务器的端口*/
+#define RDS_SERVER_PORT     6379
+
 typedef enum
 {
     RDS_LBALGM_TYPE_LEASTCONN = 0,  /*最小连接数*/
@@ -30,9 +33,9 @@ typedef enum
 /*RDS的连接信息*/
 typedef struct tagRdsConnInfo
 {
-    CHAR acSevAddr[VOS_IPV4ADDR_STRLEN];    /*redis的服务器地址*/
-    CHAR acSevPort[VOS_IPV4ADDR_STRLEN];    /*redis的服务器端口*/
-   
+    CHAR            acSevAddr[VOS_IPV4ADDR_STRLEN]; /*redis的服务器地址*/
+    int             iSevPort;                       /*redis的服务器端口*/
+    REDIS_CONN_S*   pstRdsConn;                     /*redis的连接句柄*/  
 }RDS_CONN_INFO_S, *PRDS_CONN_INFO_S;
 
 /*RDS的上下文信息*/

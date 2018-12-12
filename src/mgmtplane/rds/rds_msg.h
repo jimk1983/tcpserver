@@ -31,6 +31,7 @@ typedef enum
     RDS_MSGTYPE_UNKNOW=0,
     RDS_MSGTYPE_TerminalInfoAdd,        /*添加客户端状态*/
     RDS_MSGTYPE_TerminalInfoDel,        /*删除客户端状态*/
+    RDS_MSGTYPE_TerminalInfoOffline,    /*更新客户端状态*/
     RDS_MSGTYPE_TerminalInfoUpdate,     /*更新客户端状态*/
     RDS_MSGTYPE_RedisServerAdd,         /*Redis服务器添加*/
     RDS_MSGTYPE_RedisServerDel,         /*Redis服务器删除*/
@@ -60,6 +61,7 @@ LONG RDS_MSG_TerminalInfoDel(      CHAR*  pcTerminalID);
   
 LONG RDS_MSG_TerminalInfoUpdate(    CHAR*  pcTerminalID);
 
+LONG RDS_MSG_TerminalInfoOffline(    CHAR*  pcTerminalID);
 
 
 
